@@ -1,17 +1,16 @@
 import React from "react";
-import { Container } from "@material-ui/core";
+import ResetRequest from "../components/ResetRequest";
 import Header from "../components/Header";
-import LandingPage from "../components/LandingPage";
-import Footer from "../components/Footer";
+import { Container } from "@material-ui/core";
 
-export default function Home() {
+function request_reset() {
 	return (
 		<React.Fragment>
 			<Header />
-			<Container maxWidth="lg" disableGutters={true}>
-				<LandingPage />
+			<Container maxWidth="md">
+				<ResetRequest />
 			</Container>
-			<Footer />
+
 			<style global jsx>
 				{`
 					body,
@@ -27,3 +26,4 @@ export default function Home() {
 		</React.Fragment>
 	);
 }
+export default request_reset;

@@ -1,17 +1,16 @@
 import React from "react";
-import { Container } from "@material-ui/core";
+import Login from "../components/Login";
 import Header from "../components/Header";
-import LandingPage from "../components/LandingPage";
-import Footer from "../components/Footer";
+import { Container } from "@material-ui/core";
 
-export default function Home() {
+function login() {
 	return (
 		<React.Fragment>
 			<Header />
-			<Container maxWidth="lg" disableGutters={true}>
-				<LandingPage />
+			<Container maxWidth="md">
+				<Login />
 			</Container>
-			<Footer />
+
 			<style global jsx>
 				{`
 					body,
@@ -27,3 +26,4 @@ export default function Home() {
 		</React.Fragment>
 	);
 }
+export default login;

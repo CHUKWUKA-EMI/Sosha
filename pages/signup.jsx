@@ -1,17 +1,16 @@
 import React from "react";
-import { Container } from "@material-ui/core";
+import SignUp from "../components/SignUp";
 import Header from "../components/Header";
-import LandingPage from "../components/LandingPage";
-import Footer from "../components/Footer";
+import { Container } from "@material-ui/core";
 
-export default function Home() {
+function signup() {
 	return (
 		<React.Fragment>
 			<Header />
-			<Container maxWidth="lg" disableGutters={true}>
-				<LandingPage />
+			<Container maxWidth="md">
+				<SignUp />
 			</Container>
-			<Footer />
+
 			<style global jsx>
 				{`
 					body,
@@ -22,8 +21,10 @@ export default function Home() {
 					h {
 						font-family: "Source Sans Pro", sans-serif !important;
 					}
+					paddin-top: "1em";
 				`}
 			</style>
 		</React.Fragment>
 	);
 }
+export default signup;
