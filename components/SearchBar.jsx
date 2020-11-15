@@ -55,7 +55,7 @@ const SearchBar = (props) => {
 					headers: {
 						"x-bingapis-sdk": "true",
 						"accept-language": "en",
-						"x-rapidapi-key": process.env.RAPID_API_KEY,
+						"x-rapidapi-key": process.env.local.RAPID_API_KEY,
 						"x-rapidapi-host": "bing-news-search1.p.rapidapi.com",
 					},
 				}
