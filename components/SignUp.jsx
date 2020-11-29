@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { gql, useMutation } from "@apollo/client";
 import {
 	Box,
@@ -20,6 +20,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import validations from "../libs/validations";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Alert from "@material-ui/lab/Alert";
+import { useRouter } from "next/router";
 
 const useStyles = makeStyles((theme) => ({
 	root: {
@@ -75,6 +76,7 @@ const initialMessages = {
 
 const SignUp = () => {
 	const classes = useStyles();
+	const router = useRouter();
 	const [birthdate, setBirthdate] = useState("");
 	const [state, setState] = useState(initialState);
 	const [messages, setMessages] = useState(initialMessages);
@@ -84,6 +86,13 @@ const SignUp = () => {
 		passconf: false,
 	});
 
+	useEffect(() => {
+		const authData = JSON.parse(localStorage.getItem("authData"));
+		const token = authData !== null ? authData.token : "";
+		if (!token) {
+			router.push("/feeds");
+		}
+	});
 	const handleChange = (e) => {
 		setState({ ...state, [e.target.name]: e.target.value });
 	};
