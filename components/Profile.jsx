@@ -183,10 +183,12 @@ const Profile = () => {
 					<Box style={{ background: "#fff", paddingBottom: "2rem" }}>
 						<Box className={classes.infobox}>
 							<div>
-								<Typography variant="h6">{`${data.user.firstName} ${data.user.lastName}`}</Typography>
+								<Typography variant="h6">{`${data ? data.user.firstName : ""} ${
+									data ? data.user.lastName : ""
+								}`}</Typography>
 								<Typography variant="body1">
-									@{`${data.user.firstName.toLowerCase()}`}_
-									{`${data.user.lastName.toLowerCase()}`}
+									@{`${data ? data.user.firstName.toLowerCase() : ""}`}_
+									{`${data ? data.user.lastName.toLowerCase() : ""}`}
 								</Typography>
 								<Typography variant="h6">Headline</Typography>
 								<Typography>Lives in...</Typography>

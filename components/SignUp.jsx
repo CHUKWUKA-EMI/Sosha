@@ -243,10 +243,12 @@ const SignUp = () => {
 	`;
 	const [creatUser, { loading }] = useMutation(CREATE_USER, {
 		ignoreResults: false,
-		onError: (error) =>
+		onError: (error) => {
+			console.log("error", error);
 			setMessages({
 				failure: "Sorry your request cannot be processed at the moment",
-			}),
+			});
+		},
 		onCompleted: () => {
 			setMessages({
 				...messages,
