@@ -4,6 +4,8 @@ import Head from "next/head";
 import { ThemeProvider } from "@material-ui/core/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import theme from "../src/theme";
+import { ApolloProvider } from "@apollo/client";
+import { client } from "../Apollo/client";
 export default class MyApp extends App {
 	componentDidMount() {
 		// Remove the server-side injected CSS.
@@ -29,7 +31,9 @@ export default class MyApp extends App {
 
 				<ThemeProvider theme={theme}>
 					<CssBaseline />
-					<Component {...pageProps} />
+					<ApolloProvider client={client}>
+						<Component {...pageProps} />
+					</ApolloProvider>
 				</ThemeProvider>
 			</React.Fragment>
 		);

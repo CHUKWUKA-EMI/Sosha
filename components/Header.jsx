@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
 	Button,
 	SwipeableDrawer,
@@ -12,6 +12,7 @@ import {
 } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import { Menu, Home, People, Message } from "@material-ui/icons";
+import { useRouter } from "next/router";
 
 const useStyles = makeStyles((theme) => ({
 	root: {
@@ -94,6 +95,7 @@ const useStyles = makeStyles((theme) => ({
 
 const Header = () => {
 	const classes = useStyles();
+	const router = useRouter();
 	const [state, setState] = useState({ right: false });
 
 	const toggleDrawer = (anchor, open) => (event) => {
