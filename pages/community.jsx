@@ -13,6 +13,7 @@ import {
 	Paper,
 	Button,
 } from "@material-ui/core";
+import ArrowDropDownSharpIcon from "@material-ui/icons/ArrowDropDownSharp";
 import { makeStyles } from "@material-ui/core/styles";
 import { Menu, MoreHoriz } from "@material-ui/icons";
 import CommunityNav from "../components/CommunityNav";
@@ -84,6 +85,13 @@ const useStyles = makeStyles((theme) => ({
 		paddingRight: "1%",
 		background: "#fff",
 	},
+	avatarDiv: {
+		display: "flex",
+		flexDirection: "column",
+		marginLeft: "90%",
+		marginRight: "5%",
+		alignItems: "center",
+	},
 }));
 
 function Community(props) {
@@ -91,11 +99,16 @@ function Community(props) {
 	const medium = useMediaQuery("@media screen and (min-width: 959px)");
 	const [mobileOpen, setMobileOpen] = React.useState(false);
 	const [openLogout, setOpen] = React.useState(false);
+	const [user, setUser] = React.useState({});
 
 	const handleDrawerToggle = () => {
 		setMobileOpen(!mobileOpen);
 	};
 
+	React.useEffect(() => {
+		const localUser = JSON.parse(localStorage.getItem("user"));
+		setUser(localUser);
+	}, []);
 	return (
 		<div className={classes.root}>
 			<AppBar elevation={1} position="fixed" className={classes.appBar}>
@@ -107,6 +120,13 @@ function Community(props) {
 						onClick={handleDrawerToggle}>
 						<Menu style={{ color: "#fff" }} />
 					</IconButton>
+					<div className={classes.avatarDiv}>
+						<Avatar
+							src={user.imgUrl}
+							style={{ height: "2rem", width: "2rem" }}
+						/>
+						<ArrowDropDownSharpIcon color="primary" />
+					</div>
 				</Toolbar>
 			</AppBar>
 			<nav aria-label="community nav">
@@ -128,7 +148,10 @@ function Community(props) {
 								marginTop: "1rem",
 								marginBottom: "1rem",
 							}}>
-							<Avatar style={{ height: "6rem", width: "6rem" }} />
+							<Avatar
+								src={user.imgUrl}
+								style={{ height: "6rem", width: "6rem" }}
+							/>
 						</div>
 						<Divider />
 						{<CommunityNav />}
@@ -162,17 +185,33 @@ function Community(props) {
 								}}>
 								<div style={{ display: "flex" }}>
 									<div
-										style={{
-											borderRadius: "2rem",
-											background: "#32506D",
-											width: "3rem",
-											height: "3rem",
-										}}></div>
+										style={
+											user
+												? {
+														backgroundImage: "url(" + user.imgUrl + ")",
+														backgroundRepeat: "no-repeat",
+														backgroundSize: "cover",
+														backgroundPosition: "center",
+														borderRadius: "2rem",
+														width: "3rem",
+														height: "3rem",
+												  }
+												: {
+														borderRadius: "2rem",
+														background: "#32506D",
+														width: "3rem",
+														height: "3rem",
+												  }
+										}></div>
 									<Hidden mdDown>
 										<div style={{ paddingLeft: "1em" }}>
-											<Typography style={{ fontWeight: "bold" }}>
-												firstName
-											</Typography>
+											{user ? (
+												<Typography style={{ fontWeight: "bold" }}>
+													{user.firstName}
+												</Typography>
+											) : (
+												""
+											)}
 										</div>
 									</Hidden>
 								</div>

@@ -1,7 +1,5 @@
 import React from "react";
 import {
-	Modal,
-	Backdrop,
 	Box,
 	Typography,
 	Input,
@@ -9,7 +7,6 @@ import {
 	InputAdornment,
 	Dialog,
 	Button,
-	Fab,
 } from "@material-ui/core";
 import { PhotoCamera, Close, DateRange } from "@material-ui/icons";
 import { makeStyles } from "@material-ui/core/styles";
@@ -25,7 +22,8 @@ const useStyles = makeStyles((theme) => ({
 	},
 	submit: {
 		fontWeight: "bold",
-		marginTop: "2rem",
+		marginTop: "1rem",
+		marginBottom: "1rem",
 	},
 	profileInfo: {
 		border: "1px solid #32506D",
@@ -66,11 +64,31 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const EditProfile = (props) => {
-	const { open, handleClose } = props;
+	const {
+		open,
+		handleClose,
+		handleChange,
+		validateField,
+		firstName,
+		lastName,
+		birthdate,
+		setBirthdate,
+		email,
+		phone,
+		imageUrl,
+		headline,
+		bio,
+		country,
+		state,
+		sex,
+		website,
+		data,
+		handleSubmit,
+		update,
+		noErrors,
+	} = props;
 
 	const classes = useStyles();
-	const [selectedDate, setSelectedDate] = React.useState(null);
-	const rootRef = React.useRef(null);
 
 	const editForm = (
 		<Box className={classes.dialogRoot}>
@@ -91,40 +109,36 @@ const EditProfile = (props) => {
 					Edit profile
 				</Typography>
 			</div>
-			<form className={classes.form}>
+			<form
+				onSubmit={(e) => {
+					e.preventDefault();
+					handleSubmit();
+				}}
+				className={classes.form}>
 				<Box
 					style={{
 						marginBottom: "2rem",
 						background: "#c2d6d6",
 						height: "8rem",
 					}}>
-					<div style={{ marginLeft: "auto", marginRight: "auto" }}>
-						<input
-							accept="image/*"
-							style={{ display: "none" }}
-							id="contained-button-file1"
-							type="file"
-						/>
-						<label htmlFor="contained-button-file1">
-							<IconButton
-								aria-label="upload picture"
-								color="primary"
-								component="span">
-								<PhotoCamera
-									style={{
-										height: "2rem",
-										width: "2rem",
-									}}
-								/>
-							</IconButton>
-						</label>
-					</div>
-					<div className={classes.imgArea}>
+					<div
+						style={
+							imageUrl
+								? { backgroundImage: "url(" + imageUrl + ")" }
+								: data
+								? {
+										backgroundImage: "url(" + data.user.imgUrl + ")",
+								  }
+								: { background: "#32506D" }
+						}
+						className={classes.imgArea}>
 						<input
 							accept="image/*"
 							style={{ display: "none" }}
 							id="contained-button-file2"
-							multiple
+							name="imageUrl"
+							onChange={handleChange}
+							onKeyUp={validateField}
 							type="file"
 						/>
 						<label htmlFor="contained-button-file2">
@@ -147,6 +161,9 @@ const EditProfile = (props) => {
 					<Input
 						className={classes.profileInfo}
 						name="firstName"
+						value={firstName}
+						onChange={handleChange}
+						onKeyUp={validateField}
 						disableUnderline={true}
 						fullWidth
 						id="firstName"
@@ -159,13 +176,17 @@ const EditProfile = (props) => {
 						disableUnderline={true}
 						id="lastName"
 						name="lastName"
-						autoComplete="lname"
+						value={lastName}
+						onChange={handleChange}
+						onKeyUp={validateField}
+						autoComplete="lastName"
 					/>
 					<Typography color="primary">Date of Birth</Typography>
 					<DatePicker
-						selected={selectedDate}
-						onChange={(date) => setSelectedDate(date)}
+						selected={birthdate}
+						onChange={(date) => setBirthdate(date)}
 						isClearable
+						name="birthdate"
 						showMonthDropdown
 						showYearDropdown
 						customInput={
@@ -174,7 +195,7 @@ const EditProfile = (props) => {
 								fullWidth
 								disableUnderline={true}
 								id="dateOfBirth"
-								name="dateOf Birth"
+								name="birthdate"
 								endAdornment={
 									<InputAdornment position="end">
 										<IconButton color="primary">
@@ -193,6 +214,9 @@ const EditProfile = (props) => {
 						disableUnderline={true}
 						id="email"
 						name="email"
+						value={email}
+						onChange={handleChange}
+						onKeyUp={validateField}
 						autoComplete="email"
 					/>
 
@@ -203,6 +227,9 @@ const EditProfile = (props) => {
 						disableUnderline={true}
 						id="phone"
 						name="phone"
+						value={phone}
+						onChange={handleChange}
+						onKeyUp={validateField}
 						autoComplete="phone"
 					/>
 					<Typography color="primary">Headline</Typography>
@@ -213,6 +240,9 @@ const EditProfile = (props) => {
 						disableUnderline={true}
 						id="headline"
 						name="headline"
+						value={headline}
+						onChange={handleChange}
+						onKeyUp={validateField}
 						autoComplete="headline"
 					/>
 					<Typography color="primary">Bio</Typography>
@@ -222,6 +252,9 @@ const EditProfile = (props) => {
 						disableUnderline={true}
 						id="bio"
 						name="bio"
+						value={bio}
+						onChange={handleChange}
+						onKeyUp={validateField}
 						autoComplete="bio"
 					/>
 					<Typography color="primary">Country</Typography>
@@ -231,6 +264,9 @@ const EditProfile = (props) => {
 						disableUnderline={true}
 						id="country"
 						name="country"
+						value={country}
+						onChange={handleChange}
+						onKeyUp={validateField}
 						autoComplete="country"
 					/>
 					<Typography color="primary">State</Typography>
@@ -240,7 +276,22 @@ const EditProfile = (props) => {
 						disableUnderline={true}
 						id="state"
 						name="state"
+						value={state}
+						onChange={handleChange}
+						onKeyUp={validateField}
 						autoComplete="state"
+					/>
+					<Typography color="primary">Sex</Typography>
+					<Input
+						className={classes.profileInfo}
+						fullWidth
+						disableUnderline={true}
+						id="sex"
+						name="sex"
+						value={sex}
+						onChange={handleChange}
+						onKeyUp={validateField}
+						autoComplete="sex"
 					/>
 					<Typography color="primary">Website Url</Typography>
 					<Input
@@ -248,7 +299,10 @@ const EditProfile = (props) => {
 						fullWidth
 						disableUnderline={true}
 						id="websiteurl"
-						name="websiteurl"
+						name="website"
+						value={website}
+						onChange={handleChange}
+						onKeyUp={validateField}
 						autoComplete="websiteurl"
 					/>
 					<Button
@@ -256,8 +310,9 @@ const EditProfile = (props) => {
 						fullWidth
 						variant="contained"
 						color="primary"
+						disabled={update || !noErrors ? true : false}
 						className={classes.submit}>
-						Save
+						{update ? "LOADING..." : "SAVE"}
 					</Button>
 				</Box>
 			</form>

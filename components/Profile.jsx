@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { gql, useQuery } from "@apollo/client";
+import { gql, useQuery, useMutation } from "@apollo/client";
 import PropTypes from "prop-types";
 import {
 	Box,
@@ -9,11 +9,19 @@ import {
 	AppBar,
 	Tabs,
 	Tab,
+	Link,
 } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import Skeleton from "@material-ui/lab/Skeleton";
 import EditProfile from "./EditProfile";
+import LinkIcon from "@material-ui/icons/Link";
+import LocationOnIcon from "@material-ui/icons/LocationOn";
+import DateRangeIcon from "@material-ui/icons/DateRange";
+import Avatar from "@material-ui/core/Avatar";
 import { useRouter } from "next/router";
+import validations from "../libs/validations";
+import Resizer from "react-image-file-resizer";
+import { formatDate } from "../libs/dates";
 
 const useStyles = makeStyles((theme) => ({
 	root: {
@@ -47,7 +55,7 @@ const useStyles = makeStyles((theme) => ({
 		backgroundColor: "#fff",
 		border: "1px solid #32506D",
 		color: "#32506D",
-		fontWeight: 600,
+		fontWeight: 800,
 		textTransform: "capitalize",
 		"&:hover": {
 			background: "#c2d6d6",
@@ -73,6 +81,16 @@ const useStyles = makeStyles((theme) => ({
 		},
 		"@media screen and (max-width: 760px)": {
 			textAlign: "left",
+		},
+	},
+	link: {
+		fontSize: "1.2em",
+		fontWeight: "bold",
+		marginBottom: "0.6em",
+		textDecoration: "none",
+		color: "#32506D",
+		"&:hover": {
+			textDecoration: "underline",
 		},
 	},
 }));
@@ -111,10 +129,12 @@ function a11yProps(index) {
 const GET_USER = gql`
 	query {
 		user {
+			id
 			firstName
 			lastName
 			email
 			phone
+			imgUrl
 			birthdate
 			headline
 			bio
@@ -122,6 +142,7 @@ const GET_USER = gql`
 			state
 			website
 			sex
+			createdAt
 			Tweets {
 				id
 				content
@@ -140,13 +161,66 @@ const GET_USER = gql`
 	}
 `;
 
+const initialState = {
+	firstName: "",
+	lastName: "",
+	email: "",
+	phone: "",
+	imageUrl: "",
+	headline: "",
+	bio: "",
+	country: "",
+	state: "",
+	sex: "",
+	website: "",
+};
+
+const initialMessages = {
+	firstName: "",
+	lastName: "",
+	email: "",
+	success: "",
+	failure: "",
+};
+
 const Profile = () => {
 	const classes = useStyles();
 	const router = useRouter();
 	const [value, setValue] = useState(0);
 	const [edit, setEdit] = useState(false);
+	const [state, setState] = useState(initialState);
+	const [messages, setMessages] = useState(initialMessages);
+	const [birthdate, setBirthdate] = React.useState(null);
+	const [update, setUpdate] = useState(false);
 
-	const { loading, error, data } = useQuery(GET_USER);
+	const { loading, error, data } = useQuery(GET_USER, {
+		onCompleted: () => {
+			setState({
+				...state,
+				firstName: data.user.firstName,
+				lastName: data.user.lastName,
+				email: data.user.email,
+				phone: data.user.phone,
+				imageUrl:
+					data.user && data.user && data.user.imgUrl ? data.user.imgUrl : "",
+				headline:
+					data.user && data.user && data.user.headline
+						? data.user.headline
+						: "",
+				bio: data.user && data.user && data.user.bio ? data.user.bio : "",
+				country:
+					data.user && data.user && data.user.country ? data.user.country : "",
+				state: data.user && data.user && data.user.state ? data.user.state : "",
+				sex: data.user && data.user && data.user.sex ? data.user.sex : "",
+				website:
+					data.user && data.user && data.user.website ? data.user.website : "",
+			});
+			setBirthdate(
+				parseInt(new Date(data.user.birthdate).toLocaleDateString())
+			);
+			localStorage.setItem("user", JSON.stringify(data.user));
+		},
+	});
 
 	useEffect(() => {
 		const authData = JSON.parse(localStorage.getItem("authData"));
@@ -154,6 +228,92 @@ const Profile = () => {
 			router.push("/login");
 		}
 	});
+	const imageReg = /\.(gif|jpe?g|tiff|png|webp|bmp)$/i;
+
+	const handleChange = (e) => {
+		if (e.target.name === "imageUrl") {
+			if (imageReg.test(e.target.files[0].name)) {
+				const type = e.target.files[0].type.split("/")[1];
+
+				Resizer.imageFileResizer(
+					e.target.files[0],
+					100,
+					100,
+					type,
+					100,
+					0,
+					(uri) => {
+						setState({ ...state, imageUrl: uri });
+					},
+					"base64"
+				);
+				e.target.value = "";
+			} else {
+				e.target.value = "";
+				setState({ ...state, failure: "Please upload a valid photo" });
+			}
+		} else {
+			setState({ ...state, [e.target.name]: e.target.value });
+		}
+	};
+
+	const validateField = (e) => {
+		if (e.target.name === "firstName") {
+			const validate = validations(
+				state.firstName,
+				"First Name",
+				true,
+				"",
+				"",
+				20
+			);
+			if (validate.status) {
+				setMessages({
+					...messages,
+					firstName: validate.message,
+					success: "",
+					failure: "",
+				});
+			} else {
+				setMessages({ ...messages, firstName: "", success: "", failure: "" });
+			}
+		}
+
+		if (e.target.name === "lastName") {
+			const validate = validations(
+				state.lastName,
+				"Last Name",
+				true,
+				"",
+				"",
+				20
+			);
+			if (validate.status) {
+				setMessages({
+					...messages,
+					lastName: validate.message,
+					success: "",
+					failure: "",
+				});
+			} else {
+				setMessages({ ...messages, lastName: "", success: "", failure: "" });
+			}
+		}
+
+		if (e.target.name === "email") {
+			const validate = validations(state.email, "Email", true, "email");
+			if (validate.status) {
+				setMessages({
+					...messages,
+					email: validate.message,
+					success: "",
+					failure: "",
+				});
+			} else {
+				setMessages({ ...messages, email: "", success: "", failure: "" });
+			}
+		}
+	};
 
 	const handleTabs = (event, newValue) => {
 		setValue(newValue);
@@ -167,40 +327,226 @@ const Profile = () => {
 		setEdit(false);
 	};
 
+	const UPDATE_USER = gql`
+		mutation updateProfile(
+			$id: ID!
+			$firstName: String
+			$lastName: String
+			$email: String
+			$phone: String
+			$imgUrl: String
+			$birthdate: Date
+			$headline: String
+			$bio: String
+			$country: String
+			$state: String
+			$website: String
+			$sex: String
+		) {
+			updateProfile(
+				id: $id
+				firstName: $firstName
+				lastName: $lastName
+				email: $email
+				phone: $phone
+				imgUrl: $imgUrl
+				birthdate: $birthdate
+				headline: $headline
+				bio: $bio
+				country: $country
+				state: $state
+				website: $website
+				sex: $sex
+			) {
+				id
+				firstName
+				lastName
+				email
+				phone
+				headline
+				bio
+				country
+				state
+				sex
+				website
+			}
+		}
+	`;
+	const [updateProfile] = useMutation(UPDATE_USER, {
+		ignoreResults: false,
+		onError: (error) => {
+			console.log("error", error);
+			setMessages({
+				failure: "Sorry your request cannot be processed at the moment",
+			});
+		},
+		onCompleted: () => {
+			setState(initialState);
+			closeEdit();
+		},
+	});
+
+	const handleSubmit = async () => {
+		setUpdate(true);
+		await updateProfile({
+			variables: {
+				id: data.user.id,
+				firstName: state.firstName.trim() || data.user.firstName,
+				lastName: state.lastName.trim() || data.user.firstName,
+				email: state.email.trim() || data.user.email,
+				phone: state.phone || data.user.phone,
+				imgUrl: state.imageUrl || data.user.imgUrl,
+				birthdate: birthdate || data.user.birthdate,
+				headline: state.headline.trim() || data.user.birthdate,
+				bio: state.bio.trim() || data.user.bio,
+				country: state.country.trim() || data.user.country,
+				state: state.state.trim() || data.user.state,
+				website: state.website.trim() || data.user.website,
+				sex: state.sex.trim() || data.user.sex,
+			},
+		});
+		setUpdate(false);
+	};
+	const noErrors = () => {
+		const valid =
+			!messages.firstName &&
+			!messages.lastName &&
+			!messages.email &&
+			!messages.phone &&
+			state.firstName &&
+			state.lastName;
+		state.phone && state.email;
+
+		return valid;
+	};
+
 	return (
 		<div className={classes.root}>
-			{edit ? <EditProfile open={edit} handleClose={closeEdit} /> : ""}
+			{edit ? (
+				<EditProfile
+					open={edit}
+					handleClose={closeEdit}
+					handleChange={handleChange}
+					validateField={validateField}
+					firstName={state.firstName}
+					lastName={state.lastName}
+					birthdate={birthdate}
+					setBirthdate={setBirthdate}
+					email={state.email}
+					phone={state.phone}
+					imageUrl={state.imageUrl}
+					headline={state.headline}
+					bio={state.bio}
+					country={state.country}
+					state={state.state}
+					sex={state.sex}
+					website={state.website}
+					data={data}
+					handleSubmit={handleSubmit}
+					update={update}
+					noErrors={noErrors}
+				/>
+			) : (
+				""
+			)}
 			{!loading ? (
-				<Box>
+				<Box style={{ width: "100%" }}>
 					<Box
-						style={{
-							marginBottom: "2rem",
-							background: "#c2d6d6",
-							height: "8rem",
-						}}>
-						<div className={classes.imgArea}></div>
+						style={
+							data.user
+								? {
+										backgroundImage: "url(" + data.user.imgUrl + ")",
+										backgroundRepeat: "round",
+										backgroundSize: "cover",
+										backgroundPosition: "center",
+										marginBottom: "2rem",
+										height: "8rem",
+								  }
+								: {
+										marginBottom: "2rem",
+										background: "#c2d6d6",
+										height: "8rem",
+								  }
+						}>
+						<Avatar className={classes.imgArea} src={data.user.imgUrl} />
 					</Box>
 					<Box style={{ background: "#fff", paddingBottom: "2rem" }}>
 						<Box className={classes.infobox}>
 							<div>
-								<Typography variant="h6">{`${data ? data.user.firstName : ""} ${
-									data ? data.user.lastName : ""
-								}`}</Typography>
-								<Typography variant="body1">
+								<Typography style={{ fontSize: "2em" }} variant="h4">{`${
+									data ? data.user.firstName : ""
+								} ${data ? data.user.lastName : ""}`}</Typography>
+								<Typography style={{ marginBottom: "0.6rem" }} variant="body1">
 									@{`${data ? data.user.firstName.toLowerCase() : ""}`}_
 									{`${data ? data.user.lastName.toLowerCase() : ""}`}
 								</Typography>
-								<Typography variant="h6">Headline</Typography>
-								<Typography>Lives in...</Typography>
+								<Typography style={{ fontSize: "1.5em", fontWeight: "bold" }}>
+									{`${
+										data && data.user.headline ? `${data.user.headline}` : ""
+									}`}
+								</Typography>
+								{data && data.user.website ? (
+									<Typography style={{ display: "flex", alignItems: "center" }}>
+										<LinkIcon color="primary" />{" "}
+										<Link
+											className={classes.link}
+											href={data.user.website}
+											target="_blank">{` ${data.user.website}`}</Link>
+									</Typography>
+								) : (
+									""
+								)}
+								{data && data.user.createdAt ? (
+									<Typography
+										style={{
+											display: "flex",
+											alignItems: "center",
+											fontSize: "1.2em",
+											marginBottom: "0.6em",
+											fontWeight: 600,
+										}}>
+										<DateRangeIcon color="primary" /> Joined on{" "}
+										{formatDate(data.user.createdAt)}
+									</Typography>
+								) : (
+									""
+								)}
+								{data && data.user.state && data.user.country ? (
+									<Typography
+										style={{
+											display: "flex",
+											alignItems: "center",
+											fontWeight: "bold",
+											fontSize: "1.2em",
+										}}>
+										<LocationOnIcon color="primary" />{" "}
+										{` ${
+											data && data.user.state
+												? `${data.user.state}, ${
+														data.user.country ? data.user.country : ""
+												  }`
+												: ""
+										}`}
+									</Typography>
+								) : (
+									""
+								)}
 								<div>
-									<Button className={classes.followButton}>
-										Number of Followers
-									</Button>
-									<Button className={classes.followButton}>
-										Number of Following
-									</Button>
+									{data.user.followers ? (
+										<Button className={classes.followButton}>
+											{`${data.user.followers} followers`}
+										</Button>
+									) : (
+										""
+									)}
+									{data.user.following ? (
+										<Button className={classes.followButton}>
+											{`${data.user.following} following`}
+										</Button>
+									) : (
+										""
+									)}
 								</div>
-								<Typography>Number of connections</Typography>
 							</div>
 							<Fab
 								onClick={openEdit}
@@ -211,7 +557,30 @@ const Profile = () => {
 							</Fab>
 						</Box>
 					</Box>
-
+					{data && data.user.bio ? (
+						<Box
+							style={{
+								marginBottom: "1rem",
+								marginLeft: "auto",
+								marginRight: "auto",
+								marginTop: "1rem",
+								background: "white",
+								borderRadius: "1rem",
+								padding: "1.5rem",
+							}}>
+							<Typography variant="h4">About</Typography>
+							<Typography
+								style={{
+									fontSize: "1.2em",
+									fontWeight: "bold",
+									fontStyle: "italic",
+								}}>
+								{`${data.user.bio}`}
+							</Typography>
+						</Box>
+					) : (
+						""
+					)}
 					<Box>
 						<AppBar
 							elevation={0}
