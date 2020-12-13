@@ -122,7 +122,7 @@ function Community(props) {
 					</IconButton>
 					<div className={classes.avatarDiv}>
 						<Avatar
-							src={user.imgUrl}
+							src={user ? user.imgUrl : ""}
 							style={{ height: "2rem", width: "2rem" }}
 						/>
 						<ArrowDropDownSharpIcon color="primary" />
@@ -149,7 +149,7 @@ function Community(props) {
 								marginBottom: "1rem",
 							}}>
 							<Avatar
-								src={user.imgUrl}
+								src={user ? user.imgUrl : ""}
 								style={{ height: "6rem", width: "6rem" }}
 							/>
 						</div>
