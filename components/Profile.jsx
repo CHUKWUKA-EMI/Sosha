@@ -5,16 +5,15 @@ import {
 	Box,
 	Typography,
 	Button,
-	Fab,
 	AppBar,
 	Tabs,
 	Tab,
 	Link,
+	Badge,
 } from "@material-ui/core";
-import { makeStyles } from "@material-ui/core/styles";
+import { makeStyles, withStyles } from "@material-ui/core/styles";
 import Skeleton from "@material-ui/lab/Skeleton";
 import EditProfile from "./EditProfile";
-import LinkIcon from "@material-ui/icons/Link";
 import LocationOnIcon from "@material-ui/icons/LocationOn";
 import DateRangeIcon from "@material-ui/icons/DateRange";
 import Avatar from "@material-ui/core/Avatar";
@@ -50,15 +49,23 @@ const useStyles = makeStyles((theme) => ({
 		paddingTop: "3.5rem",
 		display: "flex",
 		justifyContent: "space-between",
+		width: "100%",
+		maxWidth: "100%",
+		overflowX: "hidden",
 	},
 	fab: {
 		backgroundColor: "#fff",
+		height: "2rem",
+		borderRadius: "0.5rem",
 		border: "1px solid #32506D",
 		color: "#32506D",
 		fontWeight: 800,
 		textTransform: "capitalize",
 		"&:hover": {
 			background: "#c2d6d6",
+		},
+		"& .MuiButton-label": {
+			lineHeight: "normal",
 		},
 	},
 	followButton: {
@@ -182,6 +189,19 @@ const initialMessages = {
 	success: "",
 	failure: "",
 };
+
+const StyledBadge = withStyles((theme) => ({
+	badge: {
+		right: "-9.5rem",
+		top: "10rem",
+		border: `2px solid ${theme.palette.background.paper}`,
+		padding: "0 4px",
+		borderRadius: "50%",
+		background: "green",
+		height: "1rem",
+		width: "1rem",
+	},
+}))(Badge);
 
 const Profile = () => {
 	const classes = useStyles();
@@ -453,7 +473,7 @@ const Profile = () => {
 				<Box style={{ width: "100%" }}>
 					<Box
 						style={
-							data.user
+							data && data.user
 								? {
 										backgroundImage: "url(" + data.user.imgUrl + ")",
 										backgroundRepeat: "round",
@@ -468,11 +488,22 @@ const Profile = () => {
 										height: "8rem",
 								  }
 						}>
-						<Avatar className={classes.imgArea} src={data.user.imgUrl} />
+						<StyledBadge
+							style={{ color: "red" }}
+							overlap="circle"
+							badgeContent=" "
+							variant="dot">
+							{
+								<Avatar
+									className={classes.imgArea}
+									src={data ? data.user.imgUrl : ""}
+								/>
+							}
+						</StyledBadge>
 					</Box>
 					<Box style={{ background: "#fff", paddingBottom: "2rem" }}>
 						<Box className={classes.infobox}>
-							<div>
+							<div style={{ width: "70%" }}>
 								<Typography style={{ fontSize: "2em" }} variant="h4">{`${
 									data ? data.user.firstName : ""
 								} ${data ? data.user.lastName : ""}`}</Typography>
@@ -486,8 +517,11 @@ const Profile = () => {
 									}`}
 								</Typography>
 								{data && data.user.website ? (
-									<Typography style={{ display: "flex", alignItems: "center" }}>
-										<LinkIcon color="primary" />{" "}
+									<Typography
+										style={{
+											display: "flex",
+											alignItems: "center",
+										}}>
 										<Link
 											className={classes.link}
 											href={data.user.website}
@@ -548,13 +582,9 @@ const Profile = () => {
 									)}
 								</div>
 							</div>
-							<Fab
-								onClick={openEdit}
-								className={classes.fab}
-								variant="extended"
-								size="medium">
+							<Button onClick={openEdit} className={classes.fab}>
 								Edit Profile
-							</Fab>
+							</Button>
 						</Box>
 					</Box>
 					{data && data.user.bio ? (

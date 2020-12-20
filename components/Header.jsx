@@ -97,6 +97,14 @@ const Header = () => {
 	const classes = useStyles();
 	const router = useRouter();
 	const [state, setState] = useState({ right: false });
+	const [auth, setAuth] = useState(null);
+
+	useEffect(() => {
+		const authData = JSON.parse(localStorage.getItem("authData"));
+		if (authData) {
+			setAuth(authData);
+		}
+	});
 
 	const toggleDrawer = (anchor, open) => (event) => {
 		if (
@@ -118,7 +126,7 @@ const Header = () => {
 		},
 		{
 			name: "My Community",
-			href: "/feeds",
+			href: auth !== null ? "/feeds" : "/login",
 			icon: <People style={{ color: "#32506D" }} />,
 		},
 	];

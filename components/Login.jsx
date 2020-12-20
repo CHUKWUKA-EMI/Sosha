@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { gql, useMutation } from "@apollo/client";
+import { client } from "../Apollo/client";
 import { Box, Hidden, Input } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import Link from "@material-ui/core/Link";
@@ -44,29 +45,28 @@ const useStyles = makeStyles((theme) => ({
 	},
 }));
 
-const initialState = {
-	email: "",
-	password: "",
-};
-
-const initialMessages = {
-	email: "",
-	password: "",
-	success: "",
-	failure: "",
-};
-
-const LOGIN = gql`
-	mutation login($email: String!, $password: String!) {
-		login(email: $email, password: $password) {
-			userId
-			token
-			tokenExpiration
-		}
-	}
-`;
-
 const Login = () => {
+	const initialState = {
+		email: "",
+		password: "",
+	};
+
+	const initialMessages = {
+		email: "",
+		password: "",
+		success: "",
+		failure: "",
+	};
+
+	const LOGIN = gql`
+		mutation login($email: String!, $password: String!) {
+			login(email: $email, password: $password) {
+				userId
+				token
+				tokenExpiration
+			}
+		}
+	`;
 	const classes = useStyles();
 	const router = useRouter();
 	const [state, setState] = useState(initialState);
@@ -113,20 +113,15 @@ const Login = () => {
 			setMessages({ ...messages, failure: error.graphQLErrors[0].message }),
 		onCompleted: () => {
 			clearMessages();
-			router.push("/profile");
 		},
 	});
 
 	const handleSubmit = async () => {
-		login({
+		const loginData = await login({
 			variables: { email: state.email, password: state.password },
-		})
-			.then((data) =>
-				localStorage.setItem("authData", JSON.stringify(data.data.login))
-			)
-			.catch(() => {
-				localStorage.clear();
-			});
+		});
+		localStorage.setItem("authData", JSON.stringify(loginData.data.login));
+		router.push("/profile");
 	};
 
 	const clearError = (value) => {

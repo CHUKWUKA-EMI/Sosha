@@ -18,6 +18,8 @@ import { makeStyles } from "@material-ui/core/styles";
 import { Menu, MoreHoriz } from "@material-ui/icons";
 import CommunityNav from "../components/CommunityNav";
 import SearchBar from "../components/SearchBar";
+import { useRouter } from "next/router";
+import { client } from "../Apollo/client";
 
 let drawerWidth = 25;
 let searchWidth = 25;
@@ -41,6 +43,11 @@ const useStyles = makeStyles((theme) => ({
 		[theme.breakpoints.up("sm")]: {
 			width: `calc(100% - ${drawerWidth}%)`,
 			marginLeft: `${drawerWidth}%`,
+			paddingRight: "2rem",
+		},
+		[theme.breakpoints.down("xs")]: {
+			width: "100%",
+			paddingRight: "4rem",
 		},
 	},
 	menuButton: {
@@ -78,6 +85,10 @@ const useStyles = makeStyles((theme) => ({
 			width: `calc(100% - ${drawerWidth}%)`,
 			marginLeft: `${drawerWidth}%`,
 		},
+		[theme.breakpoints.down("xs")]: {
+			width: "100%",
+			maxWidth: "100%",
+		},
 	},
 	searchDiv: {
 		width: `${searchWidth}%`,
@@ -91,11 +102,20 @@ const useStyles = makeStyles((theme) => ({
 		marginLeft: "90%",
 		marginRight: "5%",
 		alignItems: "center",
+		cursor: "pointer",
+		[theme.breakpoints.down("sm")]: {
+			marginLeft: "60%",
+		},
+	},
+	avatar: {
+		height: "2rem",
+		width: "2rem",
 	},
 }));
 
 function Community(props) {
 	const classes = useStyles();
+	const router = useRouter();
 	const medium = useMediaQuery("@media screen and (min-width: 959px)");
 	const [mobileOpen, setMobileOpen] = React.useState(false);
 	const [openLogout, setOpen] = React.useState(false);
@@ -106,9 +126,18 @@ function Community(props) {
 	};
 
 	React.useEffect(() => {
-		const localUser = JSON.parse(localStorage.getItem("user"));
-		setUser(localUser);
+		const authData = JSON.parse(localStorage.getItem("authData"));
+		setUser(client.cache.data.data[`User:${authData.userId}`]);
+		if (!authData) {
+			router.push("/login");
+		}
 	}, []);
+
+	const handleLogout = () => {
+		localStorage.clear();
+		router.push("/login");
+		client.resetStore();
+	};
 	return (
 		<div className={classes.root}>
 			<AppBar elevation={1} position="fixed" className={classes.appBar}>
@@ -121,14 +150,59 @@ function Community(props) {
 						<Menu style={{ color: "#fff" }} />
 					</IconButton>
 					<div className={classes.avatarDiv}>
-						<Avatar
-							src={user ? user.imgUrl : ""}
-							style={{ height: "2rem", width: "2rem" }}
-						/>
-						<ArrowDropDownSharpIcon color="primary" />
+						<div
+							style={{ display: "flex", flexDirection: "column" }}
+							onClick={() => setOpen(!openLogout)}>
+							<Avatar
+								src={user ? user.imgUrl : ""}
+								className={classes.avatar}
+							/>
+							<ArrowDropDownSharpIcon
+								style={{ cursor: "pointer" }}
+								color="primary"
+							/>
+						</div>
+
+						{openLogout && (
+							<Paper
+								style={{
+									height: "fit-content",
+									width: "9rem",
+									zIndex: 9,
+									position: "absolute",
+									top: 60,
+								}}>
+								<Button
+									onClick={() => router.push("/profile")}
+									style={{
+										background: "white",
+										color: "#32506D",
+										fontSize: "15px",
+										fontWeight: "bold",
+										width: "100%",
+										border: "2px solid #32506D",
+									}}>
+									View Profile
+								</Button>
+								<Divider />
+								<Button
+									onClick={handleLogout}
+									style={{
+										background: "white",
+										color: "#32506D",
+										fontSize: "15px",
+										fontWeight: "bold",
+										width: "100%",
+										border: "2px solid #32506D",
+									}}>
+									Logout
+								</Button>
+							</Paper>
+						)}
 					</div>
 				</Toolbar>
 			</AppBar>
+
 			<nav aria-label="community nav">
 				<Hidden smUp implementation="css">
 					<Drawer

@@ -7,6 +7,8 @@ import {
 	Divider,
 	IconButton,
 	Fab,
+	Avatar,
+	Badge,
 } from "@material-ui/core";
 import {
 	EmojiEmotionsOutlined,
@@ -41,7 +43,6 @@ const useStyles = makeStyles((theme) => ({
 	imgArea: {
 		height: "5rem",
 		width: "5rem",
-		background: "#32506D",
 		marginRight: "1rem",
 		borderRadius: "3rem",
 		[theme.breakpoints.down("xs")]: {
@@ -76,6 +77,7 @@ const videoConstraints = {
 };
 const Feed = () => {
 	const classes = useStyles();
+	const [user, setUser] = React.useState({});
 	const [emojiPicker, setEmojiPicker] = React.useState(false);
 	const [post, setPost] = React.useState(initialState);
 	const [image, setImage] = React.useState(null);
@@ -83,6 +85,10 @@ const Feed = () => {
 	const [showCamera, setShowCamera] = React.useState(false);
 	const webcamRef = React.useRef(null);
 
+	React.useEffect(() => {
+		const localUser = JSON.parse(localStorage.getItem("user"));
+		setUser(localUser);
+	}, []);
 	const handleClick = (event) => {
 		setAnchorEl(anchorEl ? null : event.currentTarget);
 	};
@@ -104,7 +110,15 @@ const Feed = () => {
 			<Box className={classes.feedbox}>
 				<form>
 					<Box style={{ display: "flex", marginBottom: "1em", width: "100%" }}>
-						<div className={classes.imgArea}></div>
+						<Badge
+							style={{ color: "green" }}
+							overlap="circle"
+							badgeContent=" "
+							variant="dot">
+							<Avatar
+								src={user ? user.imgUrl : ""}
+								className={classes.imgArea}></Avatar>
+						</Badge>
 						<div style={{ width: "80%" }}>
 							<TextareaAutosize
 								value={post.content}

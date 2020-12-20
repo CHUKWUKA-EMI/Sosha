@@ -147,13 +147,15 @@ const Explore = () => {
 							? list.map((news, index) => {
 									return (
 										<Box className={classes.newsbox} key={index}>
-											<Box className={classes.imagebox}>
-												<img
-													className={classes.newsImg}
-													src={news.image.thumbnail.contentUrl}
-													alt="image"
-												/>
-											</Box>
+											{news.image && (
+												<Box className={classes.imagebox}>
+													<img
+														className={classes.newsImg}
+														src={news.image.thumbnail.contentUrl}
+														alt="image"
+													/>
+												</Box>
+											)}
 											<Box
 												style={{
 													display: "flex",
@@ -190,7 +192,8 @@ const Explore = () => {
 													<Typography
 														style={{ fontWeight: "bold" }}
 														component="span">
-														{news.provider[0].image.thumbnail && (
+														{(news.provider[0].image ||
+															news.provider[0].image.thumbnail) && (
 															<img
 																style={{ marginRight: "0.5em" }}
 																src={
