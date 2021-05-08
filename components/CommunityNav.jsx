@@ -66,11 +66,11 @@ const CommunityNav = (props) => {
 			href: "/feeds",
 			icon: <Toc className={classes.icons} />,
 		},
-		{
-			title: "Explore",
-			href: "/explore",
-			icon: <Explore className={classes.icons} />,
-		},
+		// {
+		// 	title: "Explore",
+		// 	href: "/explore",
+		// 	icon: <Explore className={classes.icons} />,
+		// },
 		{
 			title: "Messaging",
 			href: "/messaging",

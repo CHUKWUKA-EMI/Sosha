@@ -104,7 +104,7 @@ const Header = () => {
 		if (authData) {
 			setAuth(authData);
 		}
-	});
+	}, []);
 
 	const toggleDrawer = (anchor, open) => (event) => {
 		if (
@@ -196,23 +196,40 @@ const Header = () => {
 						marginLeft: "1rem",
 					}}>
 					<Hidden xsDown>
-						<Button
-							href="/login"
-							variant="contained"
-							disableElevation
-							size="small"
-							style={{ background: "#ffff", color: "#32506D" }}
-							className={classes.loginbutton}>
-							Login
-						</Button>
-						<Button
-							href="/signup"
-							disableElevation
-							variant="contained"
-							size="small"
-							className={classes.signupbutton}>
-							Sign up
-						</Button>
+						{auth != null && (auth.token != null || auth?.token != "") ? (
+							<Button
+								href="/"
+								disableElevation
+								variant="contained"
+								size="small"
+								onClick={() => {
+									localStorage.removeItem("authData");
+									localStorage.removeItem("user");
+								}}
+								className={classes.signupbutton}>
+								Logout
+							</Button>
+						) : (
+							<>
+								<Button
+									href="/login"
+									variant="contained"
+									disableElevation
+									size="small"
+									style={{ background: "#ffff", color: "#32506D" }}
+									className={classes.loginbutton}>
+									Login
+								</Button>
+								<Button
+									href="/signup"
+									disableElevation
+									variant="contained"
+									size="small"
+									className={classes.signupbutton}>
+									Sign up
+								</Button>
+							</>
+						)}
 					</Hidden>
 					<Hidden smUp>
 						<IconButton

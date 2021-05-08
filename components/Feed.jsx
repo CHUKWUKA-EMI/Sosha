@@ -11,6 +11,8 @@ import {
 	Avatar,
 	Badge,
 	Snackbar,
+	Grid,
+	Dialog,
 } from "@material-ui/core";
 import {
 	EmojiEmotionsOutlined,
@@ -51,7 +53,7 @@ const useStyles = makeStyles((theme) => ({
 		width: "95%",
 		marginRight: "auto",
 		marginLeft: "auto",
-		marginBottom: "5em",
+		marginBottom: "2em",
 		[theme.breakpoints.down("xs")]: {
 			width: "100%",
 			borderRadius: 0,
@@ -106,6 +108,11 @@ const useStyles = makeStyles((theme) => ({
 			marginTop: "0.3em",
 		},
 	},
+	dialogbox: {
+		"& .MuiDialog-paperWidthSm": {
+			width: "60%",
+		},
+	},
 }));
 
 const StyledBadge = withStyles((theme) => ({
@@ -145,6 +152,7 @@ const Feed = () => {
 	const [posting, setPosting] = React.useState(false);
 	const [openSnack, setOpenSnack] = React.useState(false);
 	const webcamRef = React.useRef(null);
+	const [openFeedForm, setOpenFeedForm] = React.useState(false);
 
 	const { loading, error, data, refetch } = useQuery(GET_TWEETS, {
 		onError: () => {
@@ -195,6 +203,17 @@ const Feed = () => {
 		});
 	};
 
+	const clearError = (value) => {
+		setMessages({ success: "", failure: "" });
+	};
+
+	const clearMessages = () => {
+		const timer = setTimeout(() => {
+			clearError();
+		}, 1000 * 3);
+		return () => clearTimeout(timer);
+	};
+
 	const imageReg = /\.(gif|jpe?g|tiff|png|webp|bmp)$/i;
 
 	const handleImageUpload = (e) => {
@@ -241,10 +260,12 @@ const Feed = () => {
 			setMessages({
 				failure: "Sorry, something went wrong ",
 			});
+			clearMessages();
 		},
 		onCompleted: () => {
 			setMessages({ success: "Post successfully created" });
 			setPost(initialState);
+			clearMessages();
 		},
 		refetchQueries: [
 			{
@@ -256,6 +277,7 @@ const Feed = () => {
 	const handleSubmit = async () => {
 		if (post.content.trim().length == 0 && post.imgUrl == "") {
 			setMessages({ failure: "Please create a content" });
+			clearMessages();
 			return;
 		}
 		setPosting(true);
@@ -270,13 +292,15 @@ const Feed = () => {
 	};
 
 	return (
-		<div className={classes.root}>
+		<Grid className={classes.root} container justify="center">
 			{messages.failure ? (
 				<Snackbar
 					anchorOrigin={{
 						vertical: "top",
 						horizontal: "right",
 					}}
+					style={{ color: "red" }}
+					color="red"
 					open={Boolean(messages.failure)}
 					autoHideDuration={6000}
 					message={messages.failure}
@@ -298,308 +322,390 @@ const Feed = () => {
 				""
 			)}
 
-			<Box className={classes.feedbox}>
-				<form
-					onSubmit={(e) => {
-						e.preventDefault();
-						handleSubmit();
+			<Grid style={{ paddingRight: "1em", paddingLeft: "1em" }} item sm={3}>
+				<Box
+					style={{
+						backgroundColor: "white",
+						borderRadius: "1.5em",
+						padding: "1em",
+						marginTop: "1em",
 					}}>
-					<Box style={{ display: "flex", marginBottom: "1em", width: "100%" }}>
-						<StyledBadge
-							style={{ color: "green" }}
-							overlap="circle"
-							badgeContent=" "
-							variant="dot">
-							{
-								<Avatar
-									src={user ? user.imgUrl : ""}
-									className={classes.imgArea}
-								/>
-							}
-						</StyledBadge>
-						<div style={{ width: "80%" }}>
-							<TextareaAutosize
-								value={post.content}
-								onChange={(e) => setPost({ content: e.target.value })}
-								autoFocus
-								disabled={posting}
-								name="content"
-								placeholder="What do you want share?"
-								className={classes.textarea}
-								rowsMin={1}
-							/>
-							{image || post.imgUrl ? (
-								<img
-									src={image ? image : post.imgUrl}
-									alt="screen shot"
-									style={{ width: "100%" }}
-								/>
-							) : (
-								""
-							)}
-						</div>
+					<Box style={{ display: "flex", marginBottom: "1em" }}>
+						<Avatar
+							style={{
+								width: "3rem",
+								height: "3rem",
+								marginLeft: "auto",
+								marginRight: "auto",
+							}}
+							src={user ? user.imgUrl : ""}
+							className={classes.imgArea}
+						/>
 					</Box>
-					<Divider />
+					<Box style={{ textAlign: "center" }}>
+						<Typography
+							style={{
+								color: "#32506D",
+								fontWeight: "bold",
+								fontSize: "18px",
+							}}>{`${user.firstName} ${user.lastName}`}</Typography>
+						<Typography>{user.headline}</Typography>
+					</Box>
+				</Box>
+			</Grid>
+			<Grid xs={12} sm={6} item>
+				{!openFeedForm && (
 					<Box
 						style={{
 							display: "flex",
-							justifyContent: "space-between",
 							alignItems: "center",
-							paddingTop: "1rem",
-							paddingLeft: "3rem",
-						}}>
-						<div
+							marginBottom: "2em",
+						}}
+						className={classes.feedbox}>
+						<Box style={{ display: "flex", marginBottom: "1em" }}>
+							<Avatar
+								style={{ width: "3rem", height: "3rem" }}
+								src={user ? user.imgUrl : ""}
+								className={classes.imgArea}
+							/>
+						</Box>
+						<Button
+							fullWidth
+							variant="outlined"
+							onClick={() => setOpenFeedForm(true)}
 							style={{
-								display: "flex",
-								justifyContent: "space-between",
-								alignItems: "center",
+								borderRadius: "0.5em",
+								textTransform: "none",
 							}}>
-							<div style={{ marginLeft: "1rem" }}>
-								<Popper anchorEl={anchorEl} open={open}>
-									<input
-										accept="image/*"
-										style={{ display: "none" }}
-										onChange={handleImageUpload}
-										name="imgUrl"
-										multiple
-										id="icon-button-file"
-										type="file"
+							Start a post
+						</Button>
+					</Box>
+				)}
+				{openFeedForm && (
+					<Box className={classes.feedbox}>
+						<form
+							onSubmit={(e) => {
+								e.preventDefault();
+								handleSubmit();
+							}}>
+							<Box
+								style={{ display: "flex", marginBottom: "1em", width: "100%" }}>
+								<StyledBadge
+									style={{ color: "green" }}
+									overlap="circle"
+									badgeContent=" "
+									variant="dot">
+									{
+										<Avatar
+											src={user ? user.imgUrl : ""}
+											className={classes.imgArea}
+										/>
+									}
+								</StyledBadge>
+								<div style={{ width: "80%" }}>
+									<TextareaAutosize
+										value={post.content}
+										onChange={(e) => setPost({ content: e.target.value })}
+										autoFocus
+										disabled={posting}
+										name="content"
+										placeholder="What do you want share?"
+										className={classes.textarea}
+										rowsMin={1}
 									/>
-									<label
-										style={{ paddingRight: "0.5rem" }}
-										htmlFor="icon-button-file">
-										<Typography style={{ fontWeight: 600 }}>
-											Upload photo
-										</Typography>
+									{image || post.imgUrl ? (
+										<img
+											src={image ? image : post.imgUrl}
+											alt="screen shot"
+											style={{ width: "100%" }}
+										/>
+									) : (
+										""
+									)}
+								</div>
+							</Box>
+							<Divider />
+							<Box
+								style={{
+									display: "flex",
+									justifyContent: "space-between",
+									alignItems: "center",
+									paddingTop: "1rem",
+									paddingLeft: "3rem",
+								}}>
+								<div
+									style={{
+										display: "flex",
+										justifyContent: "space-between",
+										alignItems: "center",
+									}}>
+									<div style={{ marginLeft: "1rem" }}>
+										<Popper anchorEl={anchorEl} open={open}>
+											<input
+												accept="image/*"
+												style={{ display: "none" }}
+												onChange={handleImageUpload}
+												name="imgUrl"
+												multiple
+												id="icon-button-file"
+												type="file"
+											/>
+											<label
+												style={{ paddingRight: "0.5rem" }}
+												htmlFor="icon-button-file">
+												<Typography style={{ fontWeight: 600 }}>
+													Upload photo
+												</Typography>
+												<IconButton
+													color="primary"
+													aria-label="upload picture"
+													component="span">
+													<ImageOutlined
+														style={{ height: "2rem", width: "2rem" }}
+													/>
+												</IconButton>
+											</label>
+											<div
+												style={{
+													borderLeft: "1px solid black",
+													paddingLeft: "1rem",
+												}}>
+												<label>
+													<Typography style={{ fontWeight: 600 }}>
+														{!showCamera ? "Use Camera" : "Close Camera"}
+													</Typography>
+													<IconButton
+														onClick={() => setShowCamera(!showCamera)}
+														color="primary"
+														aria-label="upload picture"
+														component="span">
+														<PhotoCamera
+															style={{
+																height: "2rem",
+																width: "2rem",
+															}}
+														/>
+													</IconButton>
+												</label>
+											</div>
+										</Popper>
 										<IconButton
+											onClick={handleClick}
 											color="primary"
 											aria-label="upload picture"
 											component="span">
-											<ImageOutlined
-												style={{ height: "2rem", width: "2rem" }}
+											<AddAPhoto
+												style={{
+													height: "2rem",
+													width: "2rem",
+												}}
 											/>
 										</IconButton>
-									</label>
-									<div
-										style={{
-											borderLeft: "1px solid black",
-											paddingLeft: "1rem",
-										}}>
-										<label>
-											<Typography style={{ fontWeight: 600 }}>
-												{!showCamera ? "Use Camera" : "Close Camera"}
-											</Typography>
-											<IconButton
-												onClick={() => setShowCamera(!showCamera)}
-												color="primary"
-												aria-label="upload picture"
-												component="span">
-												<PhotoCamera
-													style={{
-														height: "2rem",
-														width: "2rem",
-													}}
-												/>
-											</IconButton>
-										</label>
 									</div>
-								</Popper>
-								<IconButton
-									onClick={handleClick}
-									color="primary"
-									aria-label="upload picture"
-									component="span">
-									<AddAPhoto
-										style={{
-											height: "2rem",
-											width: "2rem",
-										}}
-									/>
-								</IconButton>
-							</div>
-							<IconButton onClick={() => setEmojiPicker(!emojiPicker)}>
-								<EmojiEmotionsOutlined
-									style={{ height: "2rem", width: "2rem", color: "#32506D" }}
-								/>
-							</IconButton>
-						</div>
-						<div>
-							<Button
-								disabled={posting}
-								style={{ background: posting ? "white" : "" }}
-								type="submit"
-								className={classes.feedButton}>
-								{posting ? "POSTING" : "POST"}
-							</Button>
-						</div>
+									<IconButton onClick={() => setEmojiPicker(!emojiPicker)}>
+										<EmojiEmotionsOutlined
+											style={{
+												height: "2rem",
+												width: "2rem",
+												color: "#32506D",
+											}}
+										/>
+									</IconButton>
+								</div>
+								<div>
+									<Button
+										disabled={posting}
+										style={{ background: posting ? "white" : "" }}
+										type="submit"
+										className={classes.feedButton}>
+										{posting ? "POSTING" : "POST"}
+									</Button>
+								</div>
+							</Box>
+						</form>
 					</Box>
-				</form>
-			</Box>
-			{emojiPicker ? (
-				<div style={{ position: "absolute", zIndex: 1 }}>
-					<Picker
-						style={{ position: "absolute", zIndex: 1 }}
-						title="Pick your emoji…"
-						emoji="point_up"
-						emojiTooltip={true}
-						onSelect={(emoji) => onEmojiClick(emoji.native)}
-					/>
-				</div>
-			) : (
-				""
-			)}
-			{showCamera ? (
-				<>
-					<Webcam
-						audio={false}
-						height={`${30}%`}
-						ref={webcamRef}
-						screenshotFormat="image/jpeg"
-						width={`${100}%`}
-						videoConstraints={videoConstraints}
-					/>
-					<Fab
-						type="button"
-						variant="extended"
-						color="primary"
-						size="medium"
-						style={{ marginLeft: "4rem" }}
-						onClick={capture}>
-						Capture Photo
-					</Fab>
-				</>
-			) : (
-				""
-			)}
-			{!loading ? (
-				allTweets ? (
-					allTweets.map((tweet) => (
-						<Box key={tweet.id} className={classes.tweetContainer}>
-							<Box
-								style={{
-									display: "flex",
-									marginBottom: "1em",
-									width: "100%",
-									justifyContent: "space-between",
-									alignItems: "center",
-								}}>
-								<Box style={{ display: "flex" }}>
-									<StyledBadge
-										style={{ color: "green" }}
-										overlap="circle"
-										badgeContent=" "
-										variant="dot">
-										{
-											<Avatar
-												src={tweet.User.imgUrl}
-												className={classes.imgArea}
-											/>
-										}
-									</StyledBadge>
+				)}
+				{emojiPicker ? (
+					<div style={{ position: "absolute", zIndex: 1 }}>
+						<Picker
+							style={{ position: "absolute", zIndex: 1 }}
+							title="Pick your emoji…"
+							emoji="point_up"
+							emojiTooltip={true}
+							onSelect={(emoji) => onEmojiClick(emoji.native)}
+						/>
+					</div>
+				) : (
+					""
+				)}
+				{showCamera ? (
+					<>
+						<Webcam
+							audio={false}
+							height={`${30}%`}
+							ref={webcamRef}
+							screenshotFormat="image/jpeg"
+							width={`${100}%`}
+							videoConstraints={videoConstraints}
+						/>
+						<Fab
+							type="button"
+							variant="extended"
+							color="primary"
+							size="medium"
+							style={{ marginLeft: "4rem" }}
+							onClick={capture}>
+							Capture Photo
+						</Fab>
+					</>
+				) : (
+					""
+				)}
+				{!loading ? (
+					allTweets ? (
+						allTweets.map((tweet) => (
+							<Box key={tweet.id} className={classes.tweetContainer}>
+								<Box
+									style={{
+										display: "flex",
+										marginBottom: "1em",
+										width: "100%",
+										justifyContent: "space-between",
+										alignItems: "center",
+									}}>
+									<Box style={{ display: "flex" }}>
+										<StyledBadge
+											style={{ color: "green" }}
+											overlap="circle"
+											badgeContent=" "
+											variant="dot">
+											{
+												<Avatar
+													src={tweet.User.imgUrl}
+													className={classes.imgArea}
+												/>
+											}
+										</StyledBadge>
+										<Box
+											style={{
+												display: "flex",
+												flexDirection: "column",
+												alignItems: "flex-start",
+												paddingLeft: "1em",
+											}}>
+											<Typography
+												style={{
+													color: "#32506D",
+													fontWeight: "bold",
+													fontSize: "18px",
+												}}>{`${tweet.User.firstName} ${tweet.User.lastName}`}</Typography>
+											<Typography>{formatDate(tweet.createdAt)}</Typography>
+										</Box>
+									</Box>
+									<IconButton aria-label="settings">
+										<MoreHoriz />
+									</IconButton>
+								</Box>
+								<Box
+									style={{
+										width: "100%",
+										display: "flex",
+										flexDirection: "column",
+									}}>
+									{tweet.content ? (
+										<Box>
+											<Typography>{tweet.content}</Typography>
+										</Box>
+									) : (
+										""
+									)}
+									{tweet.imgUrl ? (
+										<Box>
+											<img width="100%" src={tweet.imgUrl} />
+										</Box>
+									) : (
+										""
+									)}
 									<Box
 										style={{
 											display: "flex",
-											flexDirection: "column",
-											alignItems: "flex-start",
-											paddingLeft: "1em",
+											alignItems: "center",
+											justifyContent: "space-between",
 										}}>
-										<Typography
-											style={{
-												color: "#32506D",
-												fontWeight: "bold",
-												fontSize: "18px",
-											}}>{`${tweet.User.firstName} ${tweet.User.lastName}`}</Typography>
-										<Typography>{formatDate(tweet.createdAt)}</Typography>
+										<span>
+											{tweet.Likes.length > 0 ? tweet.Likes.length : ""}
+										</span>
+										<span>
+											{tweet.Comments.length > 0
+												? tweet.Comments.length + " comments"
+												: ""}
+										</span>
 									</Box>
 								</Box>
-								<IconButton aria-label="settings">
-									<MoreHoriz />
-								</IconButton>
-							</Box>
-							<Box
-								style={{
-									width: "100%",
-									display: "flex",
-									flexDirection: "column",
-								}}>
-								{tweet.content ? (
-									<Box>
-										<Typography>{tweet.content}</Typography>
-									</Box>
-								) : (
-									""
-								)}
-								{tweet.imgUrl ? (
-									<Box>
-										<img width="100%" src={tweet.imgUrl} />
-									</Box>
-								) : (
-									""
-								)}
+								<Divider variant="fullWidth" />
 								<Box
 									style={{
 										display: "flex",
 										alignItems: "center",
-										justifyContent: "space-between",
+										justifyContent: "space-around",
 									}}>
-									<span>{tweet.Likes.length ? tweet.Likes.length : ""}</span>
-									<span>
-										{tweet.Comments.length
-											? tweet.Comments.length + " comments"
-											: ""}
-									</span>
+									<IconButton>
+										<ThumbUpOutlined />
+									</IconButton>
+									<IconButton>
+										<ChatBubbleOutline />
+									</IconButton>
+									<IconButton>
+										<Share />
+									</IconButton>
 								</Box>
+								<Divider variant="fullWidth" />
+								{tweet.Comments || tweet.Comments.length > 0
+									? tweet.Comments.map((comment) => (
+											<Box
+												key={comment.id}
+												style={{ width: "100%", paddingLeft: "1em" }}>
+												<Comment comment={comment} />
+											</Box>
+									  ))
+									: ""}
 							</Box>
-							<Divider variant="fullWidth" />
-							<Box
-								style={{
-									display: "flex",
-									alignItems: "center",
-									justifyContent: "space-around",
-								}}>
-								<IconButton>
-									<ThumbUpOutlined />
-								</IconButton>
-								<IconButton>
-									<ChatBubbleOutline />
-								</IconButton>
-								<IconButton>
-									<Share />
-								</IconButton>
-							</Box>
-							<Divider variant="fullWidth" />
-							{tweet.Comments || tweet.Comments.length
-								? tweet.Comments.map((comment) => (
-										<Box
-											key={comment.id}
-											style={{ width: "100%", paddingLeft: "1em" }}>
-											<Comment comment={comment} />
-										</Box>
-								  ))
-								: ""}
-						</Box>
-					))
+						))
+					) : (
+						""
+					)
 				) : (
-					""
-				)
-			) : (
-				<div>
-					<Skeleton style={{ background: "white" }} variant="text" />
-					<Skeleton
-						style={{ background: "white" }}
-						variant="circle"
-						width={80}
-						height={80}
-					/>
-					<Skeleton
-						style={{ background: "white" }}
-						variant="rect"
-						width={`${100}%`}
-						height={118}
-					/>
-				</div>
-			)}
-		</div>
+					<div>
+						<Skeleton style={{ background: "white" }} variant="text" />
+						<Skeleton
+							style={{ background: "white" }}
+							variant="circle"
+							width={80}
+							height={80}
+						/>
+						<Skeleton
+							style={{ background: "white" }}
+							variant="rect"
+							width={`${100}%`}
+							height={118}
+						/>
+					</div>
+				)}
+			</Grid>
+			<Grid style={{ paddingRight: "1em", paddingLeft: "1em" }} item sm={3}>
+				<Box
+					style={{
+						backgroundColor: "white",
+						borderRadius: "1.5em",
+						padding: "1em",
+						marginTop: "1em",
+					}}>
+					<Typography style={{ fontWeight: "bold", textAlign: "center" }}>
+						People you can follow
+					</Typography>
+				</Box>
+			</Grid>
+		</Grid>
 	);
 };
 
