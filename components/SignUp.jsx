@@ -89,7 +89,7 @@ const SignUp = () => {
 	useEffect(() => {
 		const authData = JSON.parse(localStorage.getItem("authData"));
 		const token = authData !== null ? authData.token : "";
-		if (!token) {
+		if (token) {
 			router.push("/feeds");
 		}
 	});

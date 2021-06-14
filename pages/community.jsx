@@ -168,10 +168,13 @@ function Community(props) {
 
 	React.useEffect(() => {
 		const authData = JSON.parse(localStorage.getItem("authData"));
-		setUser(client.cache.data.data[`User:${authData.userId}`]);
-		if (!authData) {
+		if(authData !=null){
+			setUser(client.cache.data.data[`User:${authData.userId}`]);
+		}else{
 			router.push("/login");
 		}
+		
+		
 	}, []);
 
 	const handleLogout = () => {
