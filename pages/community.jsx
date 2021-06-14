@@ -93,8 +93,8 @@ const useStyles = makeStyles((theme) => ({
 		color: "rgb(29, 161, 242)",
 	},
 	icons: {
-		height: "2rem",
-		width: "2rem",
+		height: "1em",
+		width: "1em",
 		color: "#32506D",
 	},
 	navbutton: {

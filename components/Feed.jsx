@@ -14,30 +14,27 @@ import {
 	Grid,
 	Dialog,
 } from "@material-ui/core";
+import Chip from '@material-ui/core/Chip';
 import {
 	EmojiEmotionsOutlined,
-	PhotoCamera,
 	AddAPhoto,
-	ImageOutlined,
 	MoreHoriz,
 	ThumbUpOutlined,
 	ThumbUp,
-	Favorite,
-	FavoriteBorder,
+	Close as CloseIcon,
 	ChatBubbleOutline,
 	Share,
 } from "@material-ui/icons";
 import { makeStyles, withStyles } from "@material-ui/core/styles";
 import Skeleton from "@material-ui/lab/Skeleton";
-import Resizer from "react-image-file-resizer";
 import "emoji-mart/css/emoji-mart.css";
 import { Picker } from "emoji-mart";
-import Webcam from "react-webcam";
 import Popper from "../libs/Popper";
 import { useRouter } from "next/router";
 import { GET_TWEETS } from "../Apollo/queries";
 import { formatDate } from "../libs/dates";
 import Comment from "./Comments";
+import axios from 'axios'
 
 const useStyles = makeStyles((theme) => ({
 	root: {
@@ -113,6 +110,17 @@ const useStyles = makeStyles((theme) => ({
 			width: "60%",
 		},
 	},
+	snackbarOnline:{
+		"& .MuiSnackbarContent-message":{
+			color:"green",
+			fontSize:'1.5em'
+		}
+	},
+	snackbarOffline:{
+		"& .MuiSnackbarContent-message":{
+			fontSize:'1.2em'
+		}
+	}
 }));
 
 const StyledBadge = withStyles((theme) => ({
@@ -128,46 +136,50 @@ const StyledBadge = withStyles((theme) => ({
 	},
 }))(Badge);
 
-const initialState = {
-	content: "",
-	imgUrl: "",
-};
 
-const videoConstraints = {
-	width: 500,
-	height: 200,
-	facingMode: "user",
-};
 const Feed = () => {
 	const classes = useStyles();
 	const router = useRouter();
 	const [user, setUser] = React.useState({});
 	const [allTweets, setAllTweets] = React.useState([]);
 	const [emojiPicker, setEmojiPicker] = React.useState(false);
-	const [post, setPost] = React.useState(initialState);
+	const [post, setPost] = React.useState({content: "",imgUrl: ""});
 	const [messages, setMessages] = React.useState({ success: "", failure: "" });
-	const [image, setImage] = React.useState(null);
+	const [imgPreview, setImgPreview] = React.useState(null);
 	const [anchorEl, setAnchorEl] = React.useState(null);
-	const [showCamera, setShowCamera] = React.useState(false);
 	const [posting, setPosting] = React.useState(false);
 	const [openSnack, setOpenSnack] = React.useState(false);
-	const webcamRef = React.useRef(null);
 	const [openFeedForm, setOpenFeedForm] = React.useState(false);
+	const [isConnected, setIsConnected] = React.useState(false);
+	const [showOnline, setShowOnline] = React.useState(false);
 
 	const { loading, error, data, refetch } = useQuery(GET_TWEETS, {
 		onError: () => {
 			console.log("loading error", error);
 		},
 		onCompleted: () => {
-			console.log("all tweets", data.tweets);
 			setAllTweets(data.tweets);
 		},
 		errorPolicy: "all",
+		notifyOnNetworkStatusChange:true,
+		
 	});
 
-	//  const handleClick = () => {
-	// 		setOpen(true);
-	// 	};
+	const handleConnection = () => {
+		const status = navigator.onLine ? "online" : "offline";
+		if (status === "online") {
+			setIsConnected(true);
+			setShowOnline(true);
+		} else {
+			setIsConnected(false);
+			setShowOnline(true);
+		}
+	};
+
+	React.useEffect(() => {
+		window.addEventListener("online", handleConnection);
+		window.addEventListener("offline", handleConnection);
+	});
 
 	const handleClose = (event, reason) => {
 		if (reason === "clickaway") {
@@ -176,6 +188,8 @@ const Feed = () => {
 
 		setOpenSnack(false);
 	};
+
+	
 
 	React.useEffect(() => {
 		refetch();
@@ -186,16 +200,12 @@ const Feed = () => {
 		}
 		setUser(localUser);
 	}, []);
+
 	const handleClick = (event) => {
 		setAnchorEl(anchorEl ? null : event.currentTarget);
 	};
 
 	const open = Boolean(anchorEl);
-
-	const capture = React.useCallback(() => {
-		const imageSrc = webcamRef.current.getScreenshot();
-		setImage(imageSrc);
-	}, [webcamRef]);
 
 	const onEmojiClick = (emoji) => {
 		setPost({
@@ -214,27 +224,30 @@ const Feed = () => {
 		return () => clearTimeout(timer);
 	};
 
+	const uploadToCloudinary = async (image) => {
+		const url = "https://api.cloudinary.com/v1_1/chukwuka/auto/upload";
+		const formData = new FormData();
+		formData.append("file", image);
+		formData.append("upload_preset", "blog_cover_images");
+
+		try {
+			const response = await axios.post(url, formData);
+			return response;
+		} catch (err) {
+			return err.message;
+		}
+	};
+
 	const imageReg = /\.(gif|jpe?g|tiff|png|webp|bmp)$/i;
 
 	const handleImageUpload = (e) => {
+		setEmojiPicker(false)
 		if (e.target.name === "imgUrl") {
 			if (imageReg.test(e.target.files[0].name)) {
-				const type = e.target.files[0].type.split("/")[1];
-
-				Resizer.imageFileResizer(
-					e.target.files[0],
-					300,
-					400,
-					type,
-					300,
-					0,
-					(uri) => {
-						console.log("imgurl", uri);
-						setPost({ ...post, imgUrl: uri });
-					},
-					"base64"
-				);
-				e.target.value = "";
+				console.log(e.target.files[0])
+                setPost({ ...post,imgUrl:e.target.files[0] });
+		        setImgPreview(URL.createObjectURL(e.target.files[0]));
+				
 			} else {
 				e.target.value = "";
 				setPost({ ...post, failure: "Please upload a valid photo" });
@@ -257,6 +270,7 @@ const Feed = () => {
 	const [createTweet] = useMutation(CREATE_TWEET, {
 		ignoreResults: false,
 		onError: (error) => {
+			console.log('error', error)
 			setMessages({
 				failure: "Sorry, something went wrong ",
 			});
@@ -264,14 +278,14 @@ const Feed = () => {
 		},
 		onCompleted: () => {
 			setMessages({ success: "Post successfully created" });
-			setPost(initialState);
+			setPost({content: "",imgUrl: ""});
+			setImgPreview("")
 			clearMessages();
 		},
-		refetchQueries: [
-			{
-				query: GET_TWEETS,
-			},
-		],
+		update(cache,{data:{createTweet}}){
+			const data = cache.readQuery({query: GET_TWEETS})
+			cache.writeQuery({query: GET_TWEETS, data:{tweets:[...data.tweets,createTweet]}})
+		}
 	});
 
 	const handleSubmit = async () => {
@@ -280,19 +294,92 @@ const Feed = () => {
 			clearMessages();
 			return;
 		}
+		setEmojiPicker(false)
+       try{
 		setPosting(true);
-		await createTweet({
-			variables: {
-				content: post.content,
-				imgUrl: post.imgUrl || image,
-			},
-		});
-		refetch();
+         //upload image to cloudinary
+		if(post.imgUrl !=undefined){
+			const cloudRes = await uploadToCloudinary(post.imgUrl)
+			console.log('cloud res',cloudRes)
+			if (cloudRes.status == 200) {
+				await createTweet({
+					variables: {
+						content: post.content,
+						imgUrl: cloudRes.data.secure_url,
+					},
+				});
+				
+				setPosting(false);
+			}else{
+				setMessages({failure:'Sorry you cannot upload images at this time due to technical glitches. However you can post texts without images. Thanks.'})
+				
+			}
+		}else{
+			await createTweet({
+				variables: {
+					content: post.content,
+					imgUrl: post.imgUrl,
+				},
+			});
+			
+			setPosting(false);
+		}
+		
+	   }catch(e){
 		setPosting(false);
+		console.log(e)
+	   }
+		
 	};
+
+	const removeImage=()=>{
+		setPost({...post, imgUrl:""})
+		setImgPreview("")
+	}
 
 	return (
 		<Grid className={classes.root} container justify="center">
+			{isConnected ? (
+						<Snackbar
+							anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+							autoHideDuration={6000}
+							open={showOnline}
+							className={classes.snackbarOnline}
+							message="You are online"
+							key={"bottom" + "left"}
+							action={
+								<React.Fragment>
+									<IconButton
+										size="small"
+										aria-label="close"
+										color="inherit"
+										onClick={() => setShowOnline(false)}>
+										<CloseIcon fontSize="small" />
+									</IconButton>
+								</React.Fragment>
+							}
+						/>
+					) : (
+						<Snackbar
+							anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+							autoHideDuration={6000}
+							open={showOnline}
+							className={classes.snackbarOffline}
+							message="Your are offline. Check your internet connection"
+							key={"bottom" + "left"}
+							action={
+								<React.Fragment>
+									<IconButton
+										size="small"
+										aria-label="close"
+										color="inherit"
+										onClick={() => setShowOnline(false)}>
+										<CloseIcon fontSize="small" />
+									</IconButton>
+								</React.Fragment>
+							}
+						/>
+					)}
 			{messages.failure ? (
 				<Snackbar
 					anchorOrigin={{
@@ -405,20 +492,27 @@ const Feed = () => {
 								<div style={{ width: "80%" }}>
 									<TextareaAutosize
 										value={post.content}
-										onChange={(e) => setPost({ content: e.target.value })}
+										onChange={(e) =>{
+								        setPost({...post, content: e.target.value })
+										setEmojiPicker(false)
+									    }}
 										autoFocus
+										onFocus={()=>setEmojiPicker(false)}
 										disabled={posting}
 										name="content"
 										placeholder="What do you want share?"
 										className={classes.textarea}
 										rowsMin={1}
 									/>
-									{image || post.imgUrl ? (
+									{imgPreview ? (
+										<>
 										<img
-											src={image ? image : post.imgUrl}
+											src={imgPreview}
 											alt="screen shot"
 											style={{ width: "100%" }}
 										/>
+										{post.imgUrl !=undefined && post.imgUrl !="" && imgPreview !=null &&<Chip label="Remove image" onDelete={removeImage} color="primary" />}
+										</>
 									) : (
 										""
 									)}
@@ -440,8 +534,7 @@ const Feed = () => {
 										alignItems: "center",
 									}}>
 									<div style={{ marginLeft: "1rem" }}>
-										<Popper anchorEl={anchorEl} open={open}>
-											<input
+										<input
 												accept="image/*"
 												style={{ display: "none" }}
 												onChange={handleImageUpload}
@@ -450,45 +543,9 @@ const Feed = () => {
 												id="icon-button-file"
 												type="file"
 											/>
-											<label
-												style={{ paddingRight: "0.5rem" }}
+										<label
+									
 												htmlFor="icon-button-file">
-												<Typography style={{ fontWeight: 600 }}>
-													Upload photo
-												</Typography>
-												<IconButton
-													color="primary"
-													aria-label="upload picture"
-													component="span">
-													<ImageOutlined
-														style={{ height: "2rem", width: "2rem" }}
-													/>
-												</IconButton>
-											</label>
-											<div
-												style={{
-													borderLeft: "1px solid black",
-													paddingLeft: "1rem",
-												}}>
-												<label>
-													<Typography style={{ fontWeight: 600 }}>
-														{!showCamera ? "Use Camera" : "Close Camera"}
-													</Typography>
-													<IconButton
-														onClick={() => setShowCamera(!showCamera)}
-														color="primary"
-														aria-label="upload picture"
-														component="span">
-														<PhotoCamera
-															style={{
-																height: "2rem",
-																width: "2rem",
-															}}
-														/>
-													</IconButton>
-												</label>
-											</div>
-										</Popper>
 										<IconButton
 											onClick={handleClick}
 											color="primary"
@@ -501,6 +558,7 @@ const Feed = () => {
 												}}
 											/>
 										</IconButton>
+										</label>
 									</div>
 									<IconButton onClick={() => setEmojiPicker(!emojiPicker)}>
 										<EmojiEmotionsOutlined
@@ -515,10 +573,10 @@ const Feed = () => {
 								<div>
 									<Button
 										disabled={posting}
-										style={{ background: posting ? "white" : "" }}
+										style={{ background: posting ? "white" : "",color:posting?'#32506D':"" }}
 										type="submit"
 										className={classes.feedButton}>
-										{posting ? "POSTING" : "POST"}
+										{posting ? "POSTING..." : "POST"}
 									</Button>
 								</div>
 							</Box>
@@ -532,35 +590,14 @@ const Feed = () => {
 							title="Pick your emoji…"
 							emoji="point_up"
 							emojiTooltip={true}
+							
 							onSelect={(emoji) => onEmojiClick(emoji.native)}
 						/>
 					</div>
 				) : (
 					""
 				)}
-				{showCamera ? (
-					<>
-						<Webcam
-							audio={false}
-							height={`${30}%`}
-							ref={webcamRef}
-							screenshotFormat="image/jpeg"
-							width={`${100}%`}
-							videoConstraints={videoConstraints}
-						/>
-						<Fab
-							type="button"
-							variant="extended"
-							color="primary"
-							size="medium"
-							style={{ marginLeft: "4rem" }}
-							onClick={capture}>
-							Capture Photo
-						</Fab>
-					</>
-				) : (
-					""
-				)}
+				
 				{!loading ? (
 					allTweets ? (
 						allTweets.map((tweet) => (
