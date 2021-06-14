@@ -78,6 +78,18 @@ const useStyles = makeStyles((theme) => ({
 			borderRadius: "3rem",
 		},
 	},
+
+	commentAvatar:{
+        height:"3rem",
+		width:"3rem",
+		marginRight: "1rem",
+		borderRadius:"50%",
+		[theme.breakpoints.down("xs")]: {
+			height: "2rem",
+			width: "2rem",
+			borderRadius: "50%",
+		},
+	},
 	feedButton: {
 		height: "2.5rem",
 		width: "5rem",
@@ -120,7 +132,20 @@ const useStyles = makeStyles((theme) => ({
 		"& .MuiSnackbarContent-message":{
 			fontSize:'1.2em'
 		}
+	},
+	commentBox:{
+		outlineStyle: "none",
+		border: "none",
+		resize: "none",
+		marginLeft:'0.5em',
+		width: "100%",
+		fontSize: "16px",
+		fontWeight: 700,
+		backgroundColor:"#e4e6eb",
+		borderRadius:"2em",
+		padding:'0.5em'
 	}
+
 }));
 
 const StyledBadge = withStyles((theme) => ({
@@ -706,6 +731,24 @@ const Feed = () => {
 											</Box>
 									  ))
 									: ""}
+							 <Box style={{display:"flex",width:'100%', alignItems:"center", marginTop:"0.5em"}}>
+							 
+							 <Avatar
+								src={tweet.User.imgUrl}
+								className={classes.commentAvatar}
+								/>				
+								 <TextareaAutosize
+								    
+										onChange={(e) =>{
+								        
+									    }}
+										autoFocus
+										name="comment"
+										placeholder="Write comment"
+										className={classes.commentBox}
+										rowsMin={1}
+									/>
+							 </Box>
 							</Box>
 						))
 					) : (
