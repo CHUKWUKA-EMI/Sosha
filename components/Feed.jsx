@@ -13,6 +13,7 @@ import {
 	Snackbar,
 	Grid,
 	Dialog,
+	Paper
 } from "@material-ui/core";
 import Chip from '@material-ui/core/Chip';
 import {
@@ -34,6 +35,7 @@ import { useRouter } from "next/router";
 import { GET_TWEETS } from "../Apollo/queries";
 import { formatDate } from "../libs/dates";
 import Comment from "./Comments";
+import EditPost from './EditPost'
 import axios from 'axios'
 
 const useStyles = makeStyles((theme) => ({
@@ -177,6 +179,9 @@ const Feed = () => {
 	const [openFeedForm, setOpenFeedForm] = React.useState(false);
 	const [isConnected, setIsConnected] = React.useState(false);
 	const [showOnline, setShowOnline] = React.useState(false);
+	const [selectedTweet, setSelectedTweet]=React.useState({})
+	const [openSetting, setOpenSetting]=React.useState({state:false,id:''})
+	const [isUpdating,setIsUpdating]= React.useState(false)
 
 	const { loading, error, data, refetch } = useQuery(GET_TWEETS, {
 		onError: () => {
@@ -282,6 +287,7 @@ const Feed = () => {
 		}
 	};
 
+	//GRAPHQL MUTATIONS
 	const CREATE_TWEET = gql`
 		mutation createTweet($content: String, $imgUrl: String) {
 			createTweet(content: $content, imgUrl: $imgUrl) {
@@ -292,6 +298,23 @@ const Feed = () => {
 		}
 	`;
 
+	const UPDATE_TWEET = gql`
+	    mutation updateTweet($id: ID!, $content: String, $imgUrl: String){
+			updateTweet(id: $id, content: $content,imgUrl: $imgUrl){
+				id
+				content
+				imgUrl
+			}
+		}
+	`;
+
+	const DELETE_TWEET = gql`
+	    mutation deleteTweet($id:ID!){
+			deleteTweet(id:$id)
+		}
+	`;
+
+	//CREATE TWEET FUNCTION
 	const [createTweet] = useMutation(CREATE_TWEET, {
 		ignoreResults: false,
 		onError: (error) => {
@@ -313,6 +336,7 @@ const Feed = () => {
 		}
 	});
 
+	//HANDLE TWEET CREATION
 	const handleSubmit = async () => {
 		if (post.content.trim().length == 0 && post.imgUrl == "") {
 			setMessages({ failure: "Please create a content" });
@@ -357,6 +381,101 @@ const Feed = () => {
 		
 	};
 
+	//UPDATE FUNCTION
+	const [updateTweet ] = useMutation(UPDATE_TWEET,{
+		ignoreResults:false,
+		onError: (error) => {
+			console.log('error', error)
+			setMessages({
+				failure: "Sorry, something went wrong ",
+			});
+			clearMessages();
+		},
+		onCompleted: () => {
+			setMessages({ success: "Post successfully updated" });
+			setPost({content: "",imgUrl: ""});
+			setImgPreview("")
+			clearMessages();
+		},
+	})
+
+	const handleUpdate=async()=>{
+		if (selectedTweet.content.trim().length==0 && selectedTweet.imgUrl=="" && post.content.trim().length == 0 && post.imgUrl == "") {
+			setMessages({ failure: "Please create a content" });
+			clearMessages();
+			return;
+		}
+		setEmojiPicker(false)
+		try{
+			setPosting(true);
+			 //upload image to cloudinary
+			if(selectedTweet.imgUrl=="" && post.imgUrl !=undefined){
+				const cloudRes = await uploadToCloudinary(post.imgUrl)
+				console.log('cloud res',cloudRes)
+				if (cloudRes.status == 200) {
+					await updateTweet({
+						variables: {
+							id:selectedTweet.id,
+							content: selectedTweet.content || post.content,
+							imgUrl: selectedTweet.imgUrl || cloudRes.data.secure_url,
+						},
+					});
+					
+					setPosting(false);
+				}else{
+					setMessages({failure:'Sorry you cannot upload images at this time due to technical glitches. However you can post texts without images. Thanks.'})
+					
+				}
+			}else{
+				await updateTweet({
+					variables: {
+						id: selectedTweet.id,
+						content: selectedTweet.content || post.content,
+						imgUrl: post.imgUrl,
+					},
+				});
+				
+				setPosting(false);
+			}
+			
+		   }catch(e){
+			setPosting(false);
+			console.log(e)
+		   }
+	}
+
+	//DELETE TWEET
+	const [deleteTweet] = useMutation(DELETE_TWEET,{
+		ignoreResults:false,
+		onError: (error) => {
+			console.log('error', error)
+			setMessages({
+				failure: "Sorry, something went wrong ",
+			});
+			clearMessages();
+		},
+		onCompleted: () => {
+			setMessages({ success: "Post deleted" });
+			clearMessages();
+		},
+		update(cache,{data:{deleteTweet}}){
+			const data = cache.readQuery({query: GET_TWEETS})
+			cache.writeQuery({query: GET_TWEETS, data:{tweets:[...data.tweets,deleteTweet]}})
+		}
+	})
+
+	const handleDelete=async(id)=>{
+       try{
+           await deleteTweet({
+			   variables:{
+				   id
+			   }
+		   })
+	   }catch(e){
+		   console.log(e)
+	   }
+	}
+
 	const removeImage=()=>{
 		setPost({...post, imgUrl:""})
 		setImgPreview("")
@@ -364,6 +483,7 @@ const Feed = () => {
 
 	return (
 		<Grid className={classes.root} container justify="center">
+			<EditPost post={selectedTweet} setPost={(e)=>setPost({...post,content: e.target.value})} posting={posting} imgPreview={imgPreview} removeImage={removeImage} handleClick={handleClick} handleImageUpload={handleImageUpload} handleClose={handleClose} open={isUpdating} />
 			{isConnected ? (
 						<Snackbar
 							anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
@@ -625,8 +745,8 @@ const Feed = () => {
 				
 				{!loading ? (
 					allTweets ? (
-						allTweets.map((tweet) => (
-							<Box key={tweet.id} className={classes.tweetContainer}>
+						allTweets.map((tweet,index) => (
+							<Box key={index} className={classes.tweetContainer}>
 								<Box
 									style={{
 										display: "flex",
@@ -664,10 +784,20 @@ const Feed = () => {
 											<Typography>{formatDate(tweet.createdAt)}</Typography>
 										</Box>
 									</Box>
-									<IconButton aria-label="settings">
+									<IconButton onClick={()=>{setOpenSetting({state:!openSetting.state,id:tweet.id})}}>
 										<MoreHoriz />
 									</IconButton>
+									{openSetting.state && tweet.id==openSetting.id && 
+									<Paper style={{width:'fit-content',zIndex:9,display:'flex',flexDirection:'column'}}>
+									{/* <Button onClick={()=>{
+										setSelectedTweet(tweet)
+										setIsUpdating(true)
+									}}>Edit</Button> */}
+									<Button onClick={()=>handleDelete(tweet.id)}>Delete</Button>
+									</Paper>
+									}
 								</Box>
+								
 								<Box
 									style={{
 										width: "100%",
@@ -677,6 +807,7 @@ const Feed = () => {
 									{tweet.content ? (
 										<Box>
 											<Typography>{tweet.content}</Typography>
+											
 										</Box>
 									) : (
 										""
