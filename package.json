@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "eslint src/**/*.js src/**/*.jsx"
   },
   "dependencies": {
     "@apollo/client": "^3.2.7",
@@ -21,10 +22,15 @@
     "react-datepicker": "^3.3.0",
     "react-dom": "17.0.1",
     "react-image-file-resizer": "^0.3.8",
+    "react-share": "^4.4.0",
     "react-webcam": "^5.2.1",
+    "subscriptions-transport-ws": "^0.9.19",
+    "ws": "^7.5.0",
     "yup": "^0.32.3"
   },
   "devDependencies": {
+    "eslint": "^7.32.0",
+    "eslint-plugin-react": "^7.24.0",
     "husky": "^6.0.0",
     "prettier": "^2.3.1",
     "pretty-quick": "^3.1.0"
