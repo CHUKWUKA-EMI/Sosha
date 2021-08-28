@@ -1,5 +1,5 @@
 import React from "react";
-import ProfileComponent from "../components/Profile";
+import MessageComponent from "../components/Messaging";
 import Community from "./community";
 import Container from "@material-ui/core/Container";
 
@@ -7,7 +7,7 @@ export default function Profile() {
   return (
     <Community>
       <Container maxWidth="md">
-        <ProfileComponent />
+        <MessageComponent />
       </Container>
     </Community>
   );

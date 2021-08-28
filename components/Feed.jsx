@@ -39,13 +39,19 @@ import {
   GET_TWEETS,
   ADD_COMMENT,
   LIKE_POST,
+  GET_FRIENDS,
 } from "../Apollo/queries";
 import { formatDate } from "../libs/dates";
 import EditPost from "./EditPost";
 import axios from "axios";
 import Link from "next/link";
+import Cookie from "js-cookie";
+import { useDispatch, useSelector } from "react-redux";
+import { getFriends } from "../redux/friendsReducer";
 import ShareHeader from "./SocialShareHeader";
 import ShareComponent from "./SocialShareComponent";
+import UsersComponent from "./UsersComponent";
+import FriendsComponent from "./FriendsComponent";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -192,6 +198,7 @@ const StyledBadge = withStyles((theme) => ({
 const Feed = () => {
   const classes = useStyles();
   const router = useRouter();
+  const dispatch = useDispatch();
   const [user, setUser] = React.useState({});
   const [allTweets, setAllTweets] = React.useState([]);
   const [emojiPicker, setEmojiPicker] = React.useState(false);
@@ -225,6 +232,13 @@ const Feed = () => {
     notifyOnNetworkStatusChange: true,
   });
 
+  const { loading: friendsLoading, data: friendsData } = useQuery(GET_FRIENDS, {
+    onCompleted: () => {
+      console.log("friends data", friendsData);
+      dispatch(getFriends(friendsData.friends));
+    },
+  });
+
   const handleConnection = () => {
     const status = navigator.onLine ? "online" : "offline";
     if (status === "online") {
@@ -256,12 +270,14 @@ const Feed = () => {
   const openPopper = Boolean(anchorEl2);
 
   React.useEffect(() => {
-    refetch();
     const localUser = JSON.parse(localStorage.getItem("user"));
-    const authData = JSON.parse(localStorage.getItem("authData"));
-    if (!authData || !localUser) {
-      router.push("/login");
+    if (!Cookie.get("token")) {
+      window.location.href = "/login?previousPage=/feeds";
     }
+    // if (!authData || !localUser) {
+    //   router.push("/login");
+    // }
+    refetch();
     setUser(localUser);
   }, []);
 
@@ -658,6 +674,16 @@ const Feed = () => {
             <Typography>{user.headline}</Typography>
           </Box>
         </Box>
+        <Box
+          style={{
+            backgroundColor: "white",
+            borderRadius: "1.5em",
+            padding: "1em",
+            marginTop: "1em",
+          }}
+        >
+          <FriendsComponent user={user} loading={friendsLoading} />
+        </Box>
       </Grid>
       <Grid xs={12} sm={6} item>
         {!openFeedForm && (
@@ -683,6 +709,8 @@ const Feed = () => {
               style={{
                 borderRadius: "0.5em",
                 textTransform: "none",
+                fontWeight: "bold",
+                color: "darkslategrey",
               }}
             >
               Start a post
@@ -1041,6 +1069,13 @@ const Feed = () => {
         )}
       </Grid>
       <Grid style={{ paddingRight: "1em", paddingLeft: "1em" }} item sm={3}>
+        <Box style={{ marginTop: "1em", height: "100%", width: "100%" }}>
+          <img
+            src="/social-image.jpg"
+            style={{ width: "100%", height: "100%" }}
+            alt="Social Image"
+          />
+        </Box>
         <Box
           style={{
             backgroundColor: "white",
@@ -1049,9 +1084,7 @@ const Feed = () => {
             marginTop: "1em",
           }}
         >
-          <Typography style={{ fontWeight: "bold", textAlign: "center" }}>
-            People you can follow
-          </Typography>
+          <UsersComponent />
         </Box>
       </Grid>
     </Grid>

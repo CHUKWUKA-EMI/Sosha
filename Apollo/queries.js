@@ -136,3 +136,242 @@ export const LIKE_POST = gql`
     like(TweetId: $TweetId)
   }
 `;
+
+export const GET_USER = gql`
+  query {
+    user {
+      id
+      firstName
+      lastName
+      email
+      phone
+      imgUrl
+      birthdate
+      headline
+      bio
+      country
+      state
+      website
+      sex
+      createdAt
+      Tweets {
+        id
+        content
+        imgUrl
+        Comments {
+          id
+          comment
+        }
+        Likes {
+          id
+          UserId
+          value
+        }
+      }
+    }
+  }
+`;
+
+export const UPDATE_USER = gql`
+  mutation updateProfile(
+    $id: ID!
+    $firstName: String
+    $lastName: String
+    $email: String
+    $phone: String
+    $imgUrl: String
+    $birthdate: Date
+    $headline: String
+    $bio: String
+    $country: String
+    $state: String
+    $website: String
+    $sex: String
+  ) {
+    updateProfile(
+      id: $id
+      firstName: $firstName
+      lastName: $lastName
+      email: $email
+      phone: $phone
+      imgUrl: $imgUrl
+      birthdate: $birthdate
+      headline: $headline
+      bio: $bio
+      country: $country
+      state: $state
+      website: $website
+      sex: $sex
+    ) {
+      id
+      firstName
+      lastName
+      email
+      phone
+      headline
+      bio
+      country
+      state
+      sex
+      website
+    }
+  }
+`;
+
+export const GET_USER_BY_NAME = gql`
+  query getUserByName($username: String!, $token: String!) {
+    getUserByName(username: $username, token: $token) {
+      id
+      firstName
+      lastName
+      email
+      phone
+      imgUrl
+      birthdate
+      headline
+      bio
+      country
+      state
+      website
+      sex
+      createdAt
+      Tweets {
+        id
+        content
+        imgUrl
+      }
+      friendship
+      requeststatus
+    }
+  }
+`;
+export const GET_ALL_USERS = gql`
+  query getAllUsers {
+    getAllUsers {
+      id
+      firstName
+      lastName
+      imgUrl
+      headline
+      username
+    }
+  }
+`;
+
+export const SEND_FRIEND_REQUEST = gql`
+  mutation sendFriendRequest($friendId: ID!) {
+    sendFriendRequest(friendId: $friendId) {
+      id
+      requesterId
+      friendId
+      friendship
+    }
+  }
+`;
+
+export const GET_FRIENDS = gql`
+  query {
+    friends {
+      friend {
+        id
+        requesterId
+        friendId
+        friendship
+        requeststatus
+        blocked
+      }
+      userId
+      firstName
+      lastName
+      imgUrl
+      headline
+      username
+    }
+  }
+`;
+export const ACCEPT_FRIEND_REQUEST = gql`
+  mutation acceptFriendRequest($requesterId: ID!) {
+    acceptFriendRequest(requesterId: $requesterId) {
+      id
+      requesterId
+      friendId
+      friendship
+      requeststatus
+      blocked
+    }
+  }
+`;
+
+export const GET_CONNECTED_FRIENDS = gql`
+  query {
+    connectedFriends {
+      friend {
+        id
+        requesterId
+        friendId
+        friendship
+        requeststatus
+        blocked
+      }
+      userId
+      firstName
+      lastName
+      imgUrl
+      headline
+      username
+      lastMessage
+    }
+  }
+`;
+export const CREATE_CHAT = gql`
+  mutation createChat(
+    $receiverId: ID!
+    $friendshipId: ID!
+    $receiverName: String
+    $message: String!
+  ) {
+    createChat(
+      receiverId: $receiverId
+      friendshipId: $friendshipId
+      receiverName: $receiverName
+      message: $message
+    ) {
+      id
+      senderId
+      senderName
+      receiverId
+      receiverName
+      message
+      createdAt
+    }
+  }
+`;
+export const GET_CHATS = gql`
+  query chats($friendshipId: ID!) {
+    chats(friendshipId: $friendshipId) {
+      id
+      senderId
+      senderName
+      receiverId
+      receiverName
+      friendshipId
+      message
+      createdAt
+    }
+  }
+`;
+
+export const NEW_MESSAGE = gql`
+  subscription newChat($friendshipId: ID!) {
+    newChat(friendshipId: $friendshipId) {
+      id
+      senderId
+      senderName
+      receiverId
+      receiverName
+      friendshipId
+      message
+      createdAt
+    }
+  }
+`;
