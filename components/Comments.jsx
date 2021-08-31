@@ -1,9 +1,10 @@
+/* eslint-disable react/prop-types */
 import React from "react";
 import { Grid, Avatar } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import { formatDate } from "../libs/dates";
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(() => ({
   root: {
     flexGrow: 1,
     // marginTop: theme.spacing(2),
@@ -20,10 +21,10 @@ const useStyles = makeStyles((theme) => ({
 }));
 const Comments = (props) => {
   const classes = useStyles();
-  const { comment } = props;
+  const { comment, key } = props;
 
   return (
-    <div className={classes.root}>
+    <div key={key} className={classes.root}>
       <Grid style={{ marginTop: "0.5em" }} container wrap="nowrap" spacing={2}>
         <Grid item>
           <Avatar alt="comment's owner" src={comment.User.imgUrl} />

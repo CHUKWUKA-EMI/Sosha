@@ -6,6 +6,7 @@ export const GET_TWEETS = gql`
       id
       content
       imgUrl
+      imagekit_fileId
       createdAt
       User {
         id
@@ -40,6 +41,7 @@ export const GET_SINGLE_TWEET = gql`
       id
       content
       imgUrl
+      imagekit_fileId
       createdAt
       User {
         id
@@ -86,18 +88,71 @@ export const GET_TWEET_COMMENTS = gql`
 `;
 
 export const CREATE_TWEET = gql`
-  mutation createTweet($content: String, $imgUrl: String) {
-    createTweet(content: $content, imgUrl: $imgUrl) {
+  mutation createTweet(
+    $content: String
+    $imgUrl: String
+    $userId: ID!
+    $imagekit_fileId: String
+  ) {
+    createTweet(
+      content: $content
+      imgUrl: $imgUrl
+      userId: $userId
+      imagekit_fileId: $imagekit_fileId
+    ) {
       id
       content
       imgUrl
+      imagekit_fileId
+      createdAt
+      User {
+        id
+        firstName
+        lastName
+        headline
+        imgUrl
+      }
     }
   }
 `;
 
+export const NEW_TWEET = gql`
+  subscription {
+    newTweet {
+      id
+      content
+      imgUrl
+      imagekit_fileId
+      createdAt
+      User {
+        id
+        firstName
+        lastName
+        headline
+        imgUrl
+      }
+    }
+  }
+`;
+export const DELETE_TWEET_SUBSCRIPTION = gql`
+  subscription deleteTweet($id: ID!) {
+    deleteTweet(id: $id)
+  }
+`;
+
 export const UPDATE_TWEET = gql`
-  mutation updateTweet($id: ID!, $content: String, $imgUrl: String) {
-    updateTweet(id: $id, content: $content, imgUrl: $imgUrl) {
+  mutation updateTweet(
+    $id: ID!
+    $content: String
+    $imgUrl: String
+    $imagekit_fileId: String
+  ) {
+    updateTweet(
+      id: $id
+      content: $content
+      imgUrl: $imgUrl
+      imagekit_fileId: $imagekit_fileId
+    ) {
       id
       content
       imgUrl
@@ -319,7 +374,6 @@ export const GET_CONNECTED_FRIENDS = gql`
       imgUrl
       headline
       username
-      lastMessage
     }
   }
 `;
@@ -336,7 +390,7 @@ export const CREATE_CHAT = gql`
       receiverName: $receiverName
       message: $message
     ) {
-      id
+      _id
       senderId
       senderName
       receiverId
@@ -349,7 +403,7 @@ export const CREATE_CHAT = gql`
 export const GET_CHATS = gql`
   query chats($friendshipId: ID!) {
     chats(friendshipId: $friendshipId) {
-      id
+      _id
       senderId
       senderName
       receiverId
@@ -364,7 +418,7 @@ export const GET_CHATS = gql`
 export const NEW_MESSAGE = gql`
   subscription newChat($friendshipId: ID!) {
     newChat(friendshipId: $friendshipId) {
-      id
+      _id
       senderId
       senderName
       receiverId

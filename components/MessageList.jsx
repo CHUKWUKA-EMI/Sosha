@@ -69,9 +69,9 @@ export default function MessageList() {
     <Grid container className={classes.messageList}>
       {messages &&
         messages.length > 0 &&
-        messages.map((message) => (
+        messages.map((message, i) => (
           <Grid
-            key={message.id}
+            key={i}
             style={{ display: "flex", flexDirection: "column" }}
             item
             xs={12}

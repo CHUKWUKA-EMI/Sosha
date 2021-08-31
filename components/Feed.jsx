@@ -1,6 +1,7 @@
+/* eslint-disable no-undef */
 /* eslint-disable no-unused-vars */
 import React from "react";
-import { gql, useMutation, useQuery } from "@apollo/client";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import {
   Box,
   Typography,
@@ -18,14 +19,7 @@ import Chip from "@material-ui/core/Chip";
 import {
   EmojiEmotionsOutlined,
   AddAPhoto,
-  MoreHoriz,
-  ThumbUp,
-  ThumbUpOutlined,
   Close as CloseIcon,
-  ChatBubbleOutline,
-  Share,
-  Favorite,
-  ArrowForward,
 } from "@material-ui/icons";
 import { makeStyles, withStyles } from "@material-ui/core/styles";
 import Skeleton from "@material-ui/lab/Skeleton";
@@ -34,11 +28,9 @@ import { Picker } from "emoji-mart";
 import { useRouter } from "next/router";
 import {
   CREATE_TWEET,
-  UPDATE_TWEET,
-  DELETE_TWEET,
   GET_TWEETS,
   ADD_COMMENT,
-  LIKE_POST,
+  NEW_TWEET,
   GET_FRIENDS,
 } from "../Apollo/queries";
 import { formatDate } from "../libs/dates";
@@ -48,10 +40,10 @@ import Link from "next/link";
 import Cookie from "js-cookie";
 import { useDispatch, useSelector } from "react-redux";
 import { getFriends } from "../redux/friendsReducer";
-import ShareHeader from "./SocialShareHeader";
-import ShareComponent from "./SocialShareComponent";
 import UsersComponent from "./UsersComponent";
 import FriendsComponent from "./FriendsComponent";
+import { setPosts, addPost } from "../redux/postsReducer";
+import PostsList from "./PostsList";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -200,36 +192,33 @@ const Feed = () => {
   const router = useRouter();
   const dispatch = useDispatch();
   const [user, setUser] = React.useState({});
-  const [allTweets, setAllTweets] = React.useState([]);
   const [emojiPicker, setEmojiPicker] = React.useState(false);
   const [post, setPost] = React.useState({ content: "", imgUrl: "" });
   const [comment, setComment] = React.useState("");
   const [messages, setMessages] = React.useState({ success: "", failure: "" });
   const [imgPreview, setImgPreview] = React.useState(null);
   const [anchorEl, setAnchorEl] = React.useState(null);
-  const [anchorEl2, setAnchorEl2] = React.useState(null);
   const [posting, setPosting] = React.useState(false);
   const [openSnack, setOpenSnack] = React.useState(false);
   const [openFeedForm, setOpenFeedForm] = React.useState(false);
   const [isConnected, setIsConnected] = React.useState(false);
   const [showOnline, setShowOnline] = React.useState(false);
-  const [selectedTweet, setSelectedTweet] = React.useState({});
-  const [selectedTweetId, setSelectedTweetId] = React.useState("");
-  const [openSetting, setOpenSetting] = React.useState({
-    state: false,
-    id: "",
-  });
-  const [isUpdating, setIsUpdating] = React.useState(false);
+
+  //IMAGE KIT PARAMS
+  const urlEndpoint = process.env.IMAGEKIT_URL_ENDPOINT;
+  const publicKey = process.env.IMAGEKIT_PUBLIC_KEY;
+  const authenticationEndpoint = process.env.BACKEND_URL + "imagekitAuth";
 
   const { loading, error, data, refetch } = useQuery(GET_TWEETS, {
     onError: () => {
       console.log("loading error", error);
     },
     onCompleted: () => {
-      setAllTweets(data.tweets);
+      // setAllTweets(data.tweets);
+      dispatch(setPosts(data.tweets));
     },
     errorPolicy: "all",
-    notifyOnNetworkStatusChange: true,
+    // notifyOnNetworkStatusChange: true,
   });
 
   const { loading: friendsLoading, data: friendsData } = useQuery(GET_FRIENDS, {
@@ -262,12 +251,6 @@ const Feed = () => {
 
     setOpenSnack(false);
   };
-
-  const handlePopper = (event) => {
-    setAnchorEl2(anchorEl2 ? null : event.currentTarget);
-  };
-
-  const openPopper = Boolean(anchorEl2);
 
   React.useEffect(() => {
     const localUser = JSON.parse(localStorage.getItem("user"));
@@ -304,17 +287,31 @@ const Feed = () => {
     return () => clearTimeout(timer);
   };
 
-  const uploadToCloudinary = async (image) => {
-    const url = "https://api.cloudinary.com/v1_1/chukwuka/auto/upload";
+  const uploadToImageKit = async (image) => {
     const formData = new FormData();
     formData.append("file", image);
-    formData.append("upload_preset", "blog_cover_images");
-
+    formData.append("fileName", image.name);
+    formData.append("publicKey", publicKey);
+    formData.append("folder", "/images/social-media-posts");
     try {
-      const response = await axios.post(url, formData);
-      return response;
-    } catch (err) {
-      return err.message;
+      const authenticate = await axios.get(authenticationEndpoint);
+
+      if (authenticate.status === 200) {
+        formData.append("token", authenticate.data.token);
+        formData.append("expire", authenticate.data.expire);
+        formData.append("signature", authenticate.data.signature);
+        try {
+          const response = await axios.post(
+            "https://upload.imagekit.io/api/v1/files/upload",
+            formData
+          );
+          return response;
+        } catch (error) {
+          return error.message;
+        }
+      }
+    } catch (error) {
+      return error.message;
     }
   };
 
@@ -337,7 +334,6 @@ const Feed = () => {
   };
 
   //GRAPHQL MUTATIONS
-
   //CREATE TWEET FUNCTION
   const [createTweet] = useMutation(CREATE_TWEET, {
     ignoreResults: false,
@@ -354,14 +350,21 @@ const Feed = () => {
       setImgPreview("");
       clearMessages();
     },
-    update(cache, { data: { createTweet } }) {
-      const data = cache.readQuery({ query: GET_TWEETS });
-      cache.writeQuery({
-        query: GET_TWEETS,
-        data: { tweets: [...data.tweets, createTweet] },
-      });
+  });
+
+  //TWEET SUBSCRIPTION
+  const { error: newTweetError } = useSubscription(NEW_TWEET, {
+    onSubscriptionData: ({ subscriptionData }) => {
+      const { newTweet } = subscriptionData.data;
+      dispatch(addPost(newTweet));
     },
   });
+
+  React.useEffect(() => {
+    if (newTweetError) {
+      console.log("tweet subscription error: ", newTweetError);
+    }
+  }, [newTweetError]);
 
   //HANDLE TWEET CREATION
   const handleSubmit = async () => {
@@ -373,30 +376,32 @@ const Feed = () => {
     setEmojiPicker(false);
     try {
       setPosting(true);
-      //upload image to cloudinary
-      if (post.imgUrl != undefined) {
-        const cloudRes = await uploadToCloudinary(post.imgUrl);
-        console.log("cloud res", cloudRes);
+      //upload image to imagekit
+      if (post.imgUrl) {
+        const cloudRes = await uploadToImageKit(post.imgUrl);
         if (cloudRes.status == 200) {
+          // console.log("cloudRes", cloudRes);
           await createTweet({
             variables: {
               content: post.content,
-              imgUrl: cloudRes.data.secure_url,
+              imgUrl: cloudRes.data.url,
+              imagekit_fileId: cloudRes.data.fileId,
+              userId: user.id,
             },
           });
 
           setPosting(false);
         } else {
           setMessages({
-            failure:
-              "Sorry you cannot upload images at this time due to technical glitches. However you can post texts without images. Thanks.",
+            failure: "Image upload failed",
           });
+          setPosting(false);
         }
       } else {
         await createTweet({
           variables: {
             content: post.content,
-            imgUrl: post.imgUrl,
+            userId: user.id,
           },
         });
 
@@ -404,110 +409,6 @@ const Feed = () => {
       }
     } catch (e) {
       setPosting(false);
-      console.log(e);
-    }
-  };
-
-  //UPDATE FUNCTION
-  const [updateTweet] = useMutation(UPDATE_TWEET, {
-    ignoreResults: false,
-    onError: (error) => {
-      console.log("error", error);
-      setMessages({
-        failure: "Sorry, something went wrong ",
-      });
-      clearMessages();
-    },
-    onCompleted: () => {
-      setMessages({ success: "Post successfully updated" });
-      setPost({ content: "", imgUrl: "" });
-      setImgPreview("");
-      clearMessages();
-    },
-  });
-
-  const handleUpdate = async () => {
-    if (
-      selectedTweet.content.trim().length == 0 &&
-      selectedTweet.imgUrl == "" &&
-      post.content.trim().length == 0 &&
-      post.imgUrl == ""
-    ) {
-      setMessages({ failure: "Please create a content" });
-      clearMessages();
-      return;
-    }
-    setEmojiPicker(false);
-    try {
-      setPosting(true);
-      //upload image to cloudinary
-      if (selectedTweet.imgUrl == "" && post.imgUrl != undefined) {
-        const cloudRes = await uploadToCloudinary(post.imgUrl);
-        console.log("cloud res", cloudRes);
-        if (cloudRes.status == 200) {
-          await updateTweet({
-            variables: {
-              id: selectedTweet.id,
-              content: selectedTweet.content || post.content,
-              imgUrl: selectedTweet.imgUrl || cloudRes.data.secure_url,
-            },
-          });
-
-          setPosting(false);
-        } else {
-          setMessages({
-            failure:
-              "Sorry you cannot upload images at this time due to technical glitches. However you can post texts without images. Thanks.",
-          });
-        }
-      } else {
-        await updateTweet({
-          variables: {
-            id: selectedTweet.id,
-            content: selectedTweet.content || post.content,
-            imgUrl: post.imgUrl,
-          },
-        });
-
-        setPosting(false);
-      }
-    } catch (e) {
-      setPosting(false);
-      console.log(e);
-    }
-  };
-
-  //DELETE TWEET
-  const [deleteTweet] = useMutation(DELETE_TWEET, {
-    ignoreResults: false,
-    onError: (error) => {
-      console.log("error", error);
-      setMessages({
-        failure: "Sorry, something went wrong ",
-      });
-      clearMessages();
-    },
-    onCompleted: () => {
-      setMessages({ success: "Post deleted" });
-      clearMessages();
-    },
-    update(cache, { data: { deleteTweet } }) {
-      const data = cache.readQuery({ query: GET_TWEETS });
-      cache.writeQuery({
-        query: GET_TWEETS,
-        data: { tweets: [...data.tweets, deleteTweet] },
-      });
-    },
-  });
-
-  const handleDelete = async (id) => {
-    try {
-      await deleteTweet({
-        variables: {
-          id,
-        },
-      });
-    } catch (e) {
       console.log(e);
     }
   };
@@ -550,26 +451,8 @@ const Feed = () => {
     setImgPreview("");
   };
 
-  const breakText = (str) => {
-    if (str.length > 140) {
-      return `${str.slice(0, 140)}...`;
-    }
-    return str;
-  };
-
   return (
     <Grid className={classes.root} container justify="center">
-      <EditPost
-        post={selectedTweet}
-        setPost={(e) => setPost({ ...post, content: e.target.value })}
-        posting={posting}
-        imgPreview={imgPreview}
-        removeImage={removeImage}
-        handleClick={handleClick}
-        handleImageUpload={handleImageUpload}
-        handleClose={handleClose}
-        open={isUpdating}
-      />
       {isConnected ? (
         <Snackbar
           anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
@@ -805,6 +688,21 @@ const Feed = () => {
                       id="icon-button-file"
                       type="file"
                     />
+                    {/* <IKContext
+                      publicKey={publicKey}
+                      urlEndpoint={urlEndpoint}
+                      authenticationEndpoint={authenticationEndpoint}
+                    >
+                      <IKUpload
+                        id="icon-button-file"
+                        name="imgUrl"
+                        onChange={handleImageUpload}
+                        style={{ display: "none" }}
+                        fileName={post.imgUrl}
+                        // onError={onError}
+                        // onSuccess={onSuccess}
+                      />
+                    </IKContext> */}
                     <label htmlFor="icon-button-file">
                       <IconButton
                         onClick={handleClick}
@@ -863,193 +761,7 @@ const Feed = () => {
         )}
 
         {!loading ? (
-          allTweets ? (
-            allTweets.map((tweet, index) => (
-              <Box key={index} className={classes.tweetContainer}>
-                <Box
-                  style={{
-                    display: "flex",
-                    marginBottom: "1em",
-                    width: "100%",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Box style={{ display: "flex" }}>
-                    <StyledBadge
-                      style={{ color: "green" }}
-                      overlap="circle"
-                      badgeContent=" "
-                      variant="dot"
-                    >
-                      {
-                        <Avatar
-                          src={tweet.User.imgUrl}
-                          className={classes.imgArea}
-                        />
-                      }
-                    </StyledBadge>
-                    <Box
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "flex-start",
-                        paddingLeft: "1em",
-                      }}
-                    >
-                      <Typography
-                        style={{
-                          color: "#32506D",
-                          fontWeight: "bold",
-                          fontSize: "18px",
-                        }}
-                      >{`${tweet.User.firstName} ${tweet.User.lastName}`}</Typography>
-                      <Typography>{formatDate(tweet.createdAt)}</Typography>
-                    </Box>
-                  </Box>
-                  <IconButton
-                    onClick={() => {
-                      setOpenSetting({
-                        state: !openSetting.state,
-                        id: tweet.id,
-                      });
-                    }}
-                  >
-                    <MoreHoriz />
-                  </IconButton>
-                  {openSetting.state && tweet.id == openSetting.id && (
-                    <Paper
-                      style={{
-                        width: "fit-content",
-                        zIndex: 9,
-                        display: "flex",
-                        flexDirection: "column",
-                      }}
-                    >
-                      {/* <Button onClick={()=>{
-										setSelectedTweet(tweet)
-										setIsUpdating(true)
-									}}>Edit</Button> */}
-                      <Button onClick={() => handleDelete(tweet.id)}>
-                        Delete
-                      </Button>
-                    </Paper>
-                  )}
-                </Box>
-
-                <Box
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  {tweet.content ? (
-                    <Box>
-                      <Link href={`/feed/${tweet.id}`}>
-                        <a className={classes.tweetBodyLink}>
-                          <Typography
-                            style={{
-                              fontSize: "1.3em",
-                              fontWeight: 600,
-                              color: "black",
-                            }}
-                          >
-                            {breakText(tweet.content)}
-                          </Typography>
-                        </a>
-                      </Link>
-                    </Box>
-                  ) : (
-                    ""
-                  )}
-                  {tweet.imgUrl ? (
-                    <Box>
-                      <img width="100%" src={tweet.imgUrl} />
-                    </Box>
-                  ) : (
-                    ""
-                  )}
-                  <Box
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    {tweet.Likes.length > 0 ? (
-                      <span>
-                        <Favorite style={{ color: "red", fontSize: "12px" }} />
-                        <b>{tweet.Likes.length}</b>
-                      </span>
-                    ) : (
-                      ""
-                    )}
-                    <a
-                      className={classes.commentsView}
-                      onClick={() => {
-                        router.push(`/feed/${tweet.id}`);
-                      }}
-                    >
-                      {tweet.Comments.length > 0
-                        ? tweet.Comments.length > 1
-                          ? tweet.Comments.length + " comments"
-                          : tweet.Comments.length + " comment"
-                        : ""}
-                    </a>
-                  </Box>
-                </Box>
-                <Divider variant="fullWidth" />
-                <Box
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    paddingTop: "0.5em",
-                    paddingBottom: "0.5em",
-                    paddingRight: "1em",
-                    paddingLeft: "1em",
-                  }}
-                >
-                  <Button
-                    size="medium"
-                    variant="text"
-                    href={`/feed/${tweet.id}`}
-                    style={{ backgroundColor: "lightgrey", fontWeight: 600 }}
-                    // onClick={() => router.push(`/feed/${tweet.id}`)}
-                    endIcon={<ArrowForward color="primary" />}
-                  >
-                    View more
-                  </Button>
-                  {/* <Button>
-                    <ChatBubbleOutline />
-                  </Button> */}
-                  <Button
-                    size="medium"
-                    variant="text"
-                    style={{ backgroundColor: "lightgrey", fontWeight: 600 }}
-                    onClick={handlePopper}
-                    endIcon={<Share color="primary" />}
-                  >
-                    Share
-                  </Button>
-                  <ShareComponent
-                    article={tweet}
-                    anchorEl={anchorEl2}
-                    openPopper={openPopper}
-                  />
-                  <ShareHeader
-                    description={tweet.content + " - " + tweet.User.firstName}
-                    image={tweet.imgUrl}
-                    title="Sosha Feeds"
-                  />
-                </Box>
-                <Divider variant="fullWidth" />
-              </Box>
-            ))
-          ) : (
-            ""
-          )
+          <PostsList user={user} />
         ) : (
           <div>
             <Skeleton style={{ background: "white" }} variant="text" />

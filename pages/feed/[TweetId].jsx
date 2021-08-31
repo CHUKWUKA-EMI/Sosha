@@ -11,10 +11,8 @@ import {
   Avatar,
   Badge,
   Grid,
-  Paper,
 } from "@material-ui/core";
 import {
-  MoreHoriz,
   ThumbUpOutlined,
   ThumbUp,
   Share,
@@ -140,10 +138,6 @@ function Feed({ tweet }) {
   // eslint-disable-next-line no-unused-vars
   const [messages, setMessages] = React.useState({ success: "", failure: "" });
   const [user, setUser] = useState(null);
-  const [openSetting, setOpenSetting] = React.useState({
-    state: false,
-    id: "",
-  });
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -299,32 +293,6 @@ function Feed({ tweet }) {
                     </Typography>
                   </Box>
                 </Box>
-                <IconButton
-                  onClick={() => {
-                    setOpenSetting({
-                      state: !openSetting.state,
-                      id: tweet.id,
-                    });
-                  }}
-                >
-                  <MoreHoriz />
-                </IconButton>
-                {openSetting.state && tweet.id == openSetting.id && (
-                  <Paper
-                    style={{
-                      width: "fit-content",
-                      zIndex: 9,
-                      display: "flex",
-                      flexDirection: "column",
-                    }}
-                  >
-                    {/* <Button onClick={()=>{
-										setSelectedTweet(tweet)
-										setIsUpdating(true)
-									}}>Edit</Button> */}
-                    <Button>Delete</Button>
-                  </Paper>
-                )}
               </Box>
 
               <Box

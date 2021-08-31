@@ -93,7 +93,8 @@ const Messaging = () => {
 
   useEffect(() => {
     if (newMessageError) console.log("newMessageError", newMessageError);
-    if (newMessageData) {
+    if (newMessageData && selectedUser) {
+      console.log("newMessageData", newMessageData);
       dispatch(addChat(newMessageData.newChat));
     }
   }, [newMessageError, newMessageData]);
