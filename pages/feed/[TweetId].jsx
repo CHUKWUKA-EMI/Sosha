@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect } from "react";
 import { useMutation } from "@apollo/client";
-import { client } from "../../Apollo/client";
+import { initializeApollo, addApolloState } from "../../Apollo/client";
 import {
   Box,
   Typography,
@@ -529,16 +529,17 @@ function Feed({ tweet }) {
 }
 
 export async function getServerSideProps({ params }) {
-  const { data } = await client.query({
+  const apolloClient = initializeApollo();
+  const { data } = await apolloClient.query({
     query: GET_SINGLE_TWEET,
     variables: { TweetId: params.TweetId },
   });
 
-  return {
+  return addApolloState(apolloClient, {
     props: {
       tweet: data.tweet,
     },
-  };
+  });
 }
 
 export default Feed;
