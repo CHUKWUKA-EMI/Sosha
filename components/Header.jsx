@@ -22,6 +22,7 @@ const useStyles = makeStyles((theme) => ({
     flexGrow: 1,
     justifyContent: "space-between",
     paddingLeft: "5%",
+    paddingRight: "5%",
     // "@media screen and (max-width: 760px)": {
     // 	justifyContent: "space-between",
     // },
