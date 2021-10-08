@@ -204,12 +204,12 @@ const Profile = () => {
       setBirthdate(
         parseInt(new Date(data.user.birthdate).toLocaleDateString())
       );
-      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("sosha_user", JSON.stringify(data.user));
     },
   });
 
   useEffect(() => {
-    if (!Cookie.get("token")) {
+    if (!Cookie.get("sosha_token")) {
       window.location.href = "/login?previousPage=/profile";
     }
   });

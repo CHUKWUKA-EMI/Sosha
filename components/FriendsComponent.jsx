@@ -59,7 +59,7 @@ export default function FriendsComponent({ loading }) {
   // });
 
   React.useEffect(() => {
-    const localUser = JSON.parse(localStorage.getItem("user"));
+    const localUser = JSON.parse(localStorage.getItem("sosha_user"));
     setUser(localUser);
   }, []);
 

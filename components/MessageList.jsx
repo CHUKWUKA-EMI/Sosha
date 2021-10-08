@@ -56,7 +56,7 @@ export default function MessageList() {
   };
 
   useEffect(() => {
-    const localUser = JSON.parse(localStorage.getItem("user"));
+    const localUser = JSON.parse(localStorage.getItem("sosha_user"));
     setUser(localUser);
     console.log("messagesRef", document.getElementById("box"));
   }, []);

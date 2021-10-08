@@ -253,8 +253,8 @@ const Feed = () => {
   };
 
   React.useEffect(() => {
-    const localUser = JSON.parse(localStorage.getItem("user"));
-    if (!Cookie.get("token")) {
+    const localUser = JSON.parse(localStorage.getItem("sosha_user"));
+    if (!Cookie.get("sosha_token")) {
       window.location.href = "/login?previousPage=/feeds";
     }
     // if (!authData || !localUser) {

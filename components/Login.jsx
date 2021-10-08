@@ -13,7 +13,7 @@ import { makeStyles } from "@material-ui/core/styles";
 import validations from "../libs/validations";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Alert from "@material-ui/lab/Alert";
-import { useRouter } from "next/router";
+// import { useRouter } from "next/router";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -67,7 +67,7 @@ const Login = () => {
     }
   `;
   const classes = useStyles();
-  const router = useRouter();
+  // const router = useRouter();
   const [state, setState] = useState(initialState);
   const [messages, setMessages] = useState(initialMessages);
   const [showPassword, setShow] = useState(false);
@@ -118,8 +118,8 @@ const Login = () => {
       });
     },
     onCompleted: (loginData) => {
-      document.cookie = "token=" + loginData.login.token;
-      localStorage.setItem("authData", loginData.login);
+      document.cookie = "sosha_token=" + loginData.login.token;
+      localStorage.setItem("sosha_authData", loginData.login);
       clearMessages();
       window.location.href = "/profile";
     },

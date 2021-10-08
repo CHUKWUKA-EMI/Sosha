@@ -21,6 +21,7 @@ const useStyles = makeStyles((theme) => ({
     width: "100%",
     flexGrow: 1,
     justifyContent: "space-between",
+    paddingLeft: "5%",
     // "@media screen and (max-width: 760px)": {
     // 	justifyContent: "space-between",
     // },
@@ -103,8 +104,8 @@ const Header = () => {
     // if (authData) {
     // 	setAuth(authData);
     // }
-    if (Cookie.get("token")) {
-      setAuth(Cookie.get("token"));
+    if (Cookie.get("sosha_token")) {
+      setAuth(Cookie.get("sosha_token"));
     }
   }, []);
 
@@ -191,6 +192,7 @@ const Header = () => {
           href="/"
         >
           <img
+            height="50"
             src="https://ik.imagekit.io/chukwuka1991/soshaLogo_XZ2hnnLK4.png?updatedAt=1633679131698"
             alt="Logo"
           />
@@ -218,7 +220,7 @@ const Header = () => {
                 variant="contained"
                 size="small"
                 onClick={() => {
-                  Cookie.remove("token");
+                  Cookie.remove("sosha_token");
                   setAuth(null);
                 }}
                 className={classes.signupbutton}
