@@ -20,7 +20,7 @@ const useStyles = makeStyles((theme) => ({
     position: "fixed",
     width: "100%",
     flexGrow: 1,
-    justifyContent: "space-evenly",
+    justifyContent: "space-between",
     // "@media screen and (max-width: 760px)": {
     // 	justifyContent: "space-between",
     // },
@@ -183,8 +183,17 @@ const Header = () => {
   return (
     <div className={classes.root}>
       <div className={classes.logo} style={{ marginLeft: "1em" }}>
-        <a style={{ cursor: "pointer" }} href="/">
-          <img src="../myLogo.png" alt="logo" />
+        <a
+          style={{
+            cursor: "pointer",
+            textDecoration: "none",
+          }}
+          href="/"
+        >
+          <img
+            src="https://ik.imagekit.io/chukwuka1991/soshaLogo_XZ2hnnLK4.png?updatedAt=1633679131698"
+            alt="Logo"
+          />
         </a>
       </div>
       <div style={{ display: "flex", alignItems: "center" }}>
