@@ -160,10 +160,10 @@ function Community(props) {
   };
 
   React.useEffect(() => {
-    if (!Cookie.get("token")) {
+    if (!Cookie.get("sosha_token")) {
       window.location.href = "/login";
     }
-    const user = JSON.parse(localStorage.getItem("user"));
+    const user = JSON.parse(localStorage.getItem("sosha_user"));
     setUser(user);
   }, []);
 

@@ -292,7 +292,7 @@ const Feed = () => {
     formData.append("file", image);
     formData.append("fileName", image.name);
     formData.append("publicKey", publicKey);
-    formData.append("folder", "/social-media-posts");
+    formData.append("folder", "/social_media_posts");
     try {
       const authenticate = await axios.get(authenticationEndpoint);
 

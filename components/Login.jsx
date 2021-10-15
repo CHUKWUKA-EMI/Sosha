@@ -118,8 +118,9 @@ const Login = () => {
       });
     },
     onCompleted: (loginData) => {
+      console.log("loginData", loginData);
       document.cookie = "sosha_token=" + loginData.login.token;
-      localStorage.setItem("sosha_authData", loginData.login);
+      localStorage.setItem("sosha_authData", JSON.stringify(loginData.login));
       clearMessages();
       window.location.href = "/profile";
     },

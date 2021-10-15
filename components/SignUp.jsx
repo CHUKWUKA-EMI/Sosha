@@ -7,6 +7,8 @@ import {
   Input,
   InputAdornment,
   IconButton,
+  MenuItem,
+  Select,
 } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 
@@ -21,6 +23,7 @@ import validations from "../libs/validations";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Alert from "@material-ui/lab/Alert";
 import Cookie from "js-cookie";
+import axios from "axios";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -60,6 +63,8 @@ const initialState = {
   confirmPassword: "",
   phone: "",
   birthdate: "",
+  country: "",
+  state: "",
 };
 
 const initialMessages = {
@@ -70,12 +75,17 @@ const initialMessages = {
   confirmPassword: "",
   phone: "",
   birthdate: "",
+  country: "",
   success: "",
   failure: "",
 };
 
 const SignUp = () => {
   const classes = useStyles();
+  const [countries, setCountries] = useState([]);
+  const [activeCountry, setActiveCountry] = useState(null);
+  const [states, setStates] = useState([]);
+  const [regionCode, setRegionCode] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [state, setState] = useState(initialState);
   const [messages, setMessages] = useState(initialMessages);
@@ -85,16 +95,34 @@ const SignUp = () => {
   });
 
   useEffect(() => {
-    // const authData = JSON.parse(localStorage.getItem("authData"));
-    // const token = authData !== null ? authData.token : "";
-    // if (token) {
-    // 	router.push("/feeds");
-    // }
-    if (Cookie.get("token")) {
+    if (Cookie.get("sosha_token")) {
       window.location.href = "/feeds";
     }
   });
+
+  useEffect(() => {
+    (async () => {
+      // eslint-disable-next-line no-undef
+      const response = await axios.get(process.env.BACKEND_URL + "regions");
+      const countries = response.data;
+      setCountries(countries);
+      setActiveCountry(countries[1]);
+    })();
+  }, []);
+
   const handleChange = (e) => {
+    if (e.target.name === "country") {
+      setActiveCountry(
+        countries.find((country) => country.name === e.target.value)
+      );
+      setStates(
+        countries.find((country) => country.name === e.target.value)?.states
+      );
+      setRegionCode(
+        countries.find((country) => country.name === e.target.value)
+          ?.region_code
+      );
+    }
     setState({ ...state, [e.target.name]: e.target.value });
   };
 
@@ -173,6 +201,19 @@ const SignUp = () => {
         setMessages({ ...messages, phone: "", success: "", failure: "" });
       }
     }
+    if (e.target.name === "country") {
+      const validate = validations(state.country, "Country", true, "country");
+      if (validate.status) {
+        setMessages({
+          ...messages,
+          country: validate.message,
+          success: "",
+          failure: "",
+        });
+      } else {
+        setMessages({ ...messages, country: "", success: "", failure: "" });
+      }
+    }
 
     if (e.target.name === "password") {
       const validate = validations(
@@ -190,24 +231,25 @@ const SignUp = () => {
 
     if (e.target.name === "confirmPassword") {
       const validate = validations(
-        state.passwordConfirmation,
-        "Password Confirmation",
+        state.confirmPassword,
+        "Confirm Password",
         true,
         "compare",
-        state.password
+        state.password,
+        ""
       );
 
       if (validate.status) {
         setMessages({
           ...messages,
-          passwordConfirmation: validate.message,
+          confirmPassword: validate.message,
           success: "",
           failure: "",
         });
       } else {
         setMessages({
           ...messages,
-          passwordConfirmation: "",
+          confirmPassword: "",
           success: "",
           failure: "",
         });
@@ -236,6 +278,9 @@ const SignUp = () => {
       $email: String!
       $password: String!
       $phone: String!
+      $country: String!
+      $state: String!
+      $region_code: String!
       $birthdate: Date!
     ) {
       createUser(
@@ -244,6 +289,9 @@ const SignUp = () => {
         email: $email
         password: $password
         phone: $phone
+        country: $country
+        state: $state
+        region_code: $region_code
         birthdate: $birthdate
       ) {
         firstName
@@ -277,6 +325,9 @@ const SignUp = () => {
         email: state.email,
         password: state.password,
         phone: state.phone,
+        country: state.country,
+        state: state.state,
+        region_code: regionCode,
         birthdate: birthdate,
       },
     });
@@ -291,11 +342,14 @@ const SignUp = () => {
       !messages.confirmPassword &&
       state.firstName &&
       !messages.phone &&
+      !messages.country &&
       state.phone &&
       state.lastName &&
       state.email &&
       state.password &&
-      state.confirmPassword;
+      state.confirmPassword &&
+      state.password === state.confirmPassword &&
+      state.country;
 
     return !valid;
   };
@@ -466,6 +520,99 @@ const SignUp = () => {
             )}
             <Grid item xs={12}>
               <Typography color="primary">
+                Country <span style={{ color: "red" }}>*</span>
+              </Typography>
+              <Select
+                displayEmpty
+                startAdornment={
+                  activeCountry?.flag ? (
+                    <img
+                      src={activeCountry?.flag ?? ""}
+                      style={{
+                        width: "1.5em",
+                        height: "100%",
+                        marginRight: "0.5em",
+                      }}
+                    />
+                  ) : (
+                    ""
+                  )
+                }
+                labelId="demo-customized-select-label"
+                id="demo-customized-select"
+                value={state.country}
+                name="country"
+                onChange={handleChange}
+                input={
+                  <Input
+                    className={classes.profileInfo}
+                    required
+                    fullWidth
+                    disableUnderline={true}
+                  />
+                }
+                renderValue={(selected) => {
+                  if (selected.length === 0) {
+                    return <em>{activeCountry?.name}</em>;
+                  }
+
+                  return selected;
+                }}
+              >
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+                {countries.map((country, i) => (
+                  <MenuItem key={i} value={country.name}>
+                    {`${country.name} (${country.region_code})`}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Grid>
+            {messages.country && (
+              <Alert severity="error" color="error">
+                {messages.country}
+              </Alert>
+            )}
+            <Grid item xs={12}>
+              <Typography color="primary">
+                State <span style={{ color: "red" }}>*</span>
+              </Typography>
+              <Select
+                displayEmpty
+                labelId="demo-customized-select-label"
+                id="demo-customized-select"
+                value={state.state}
+                name="state"
+                onChange={handleChange}
+                input={
+                  <Input
+                    className={classes.profileInfo}
+                    required
+                    fullWidth
+                    disableUnderline={true}
+                  />
+                }
+                renderValue={(selected) => {
+                  if (selected.length === 0) {
+                    return <em>{states[0]?.name}</em>;
+                  }
+
+                  return selected;
+                }}
+              >
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+                {states?.map((state, i) => (
+                  <MenuItem key={i} value={state.name}>
+                    {`${state.name} (${state.state_code})`}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Grid>
+            <Grid item xs={12}>
+              <Typography color="primary">
                 Password <span style={{ color: "red" }}>*</span>
               </Typography>
               <Input
@@ -516,8 +663,8 @@ const SignUp = () => {
                 fullWidth
                 disableUnderline={true}
                 onChange={handleChange}
-                value={state.confirmPassword}
                 onKeyUp={validateField}
+                value={state.confirmPassword}
                 name="confirmPassword"
                 type={!show.passconf ? "password" : "text"}
                 id="confirmPassword"

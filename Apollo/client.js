@@ -12,7 +12,7 @@ import Cookie from "js-cookie";
 export const APOLLO_STATE_PROP_NAME = "__APOLLO_STATE__";
 
 const authLink = setContext((_, { headers }) => {
-  const token = Cookie.get("token");
+  const token = Cookie.get("sosha_token");
   // return the headers to the context so httpLink can read them
   return {
     headers: {

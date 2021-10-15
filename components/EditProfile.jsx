@@ -128,10 +128,14 @@ const EditProfile = (props) => {
           <div
             style={
               imageUrl
-                ? { backgroundImage: "url(" + imageUrl + ")" }
+                ? {
+                    backgroundImage: "url(" + imageUrl + ")",
+                    backgroundSize: "contain",
+                  }
                 : data
                 ? {
                     backgroundImage: "url(" + data.user.imgUrl + ")",
+                    backgroundSize: "contain",
                   }
                 : { background: "#32506D" }
             }

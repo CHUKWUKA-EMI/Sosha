@@ -18,10 +18,10 @@ import LocationOnIcon from "@material-ui/icons/LocationOn";
 import DateRangeIcon from "@material-ui/icons/DateRange";
 import Avatar from "@material-ui/core/Avatar";
 import validations from "../libs/validations";
-import Resizer from "react-image-file-resizer";
 import { formatDate } from "../libs/dates";
 import { GET_USER, UPDATE_USER } from "../Apollo/queries";
 import Cookie from "js-cookie";
+import axios from "axios";
 
 const useStyles = makeStyles(() => ({
   root: {
@@ -177,9 +177,52 @@ const Profile = () => {
   const [state, setState] = useState(initialState);
   const [messages, setMessages] = useState(initialMessages);
   const [birthdate, setBirthdate] = React.useState(null);
+  const [imgPreview, setImgPreview] = React.useState(null);
   const [update, setUpdate] = useState(false);
 
-  const { loading, data } = useQuery(GET_USER, {
+  //IMAGE KIT PARAMS
+  // eslint-disable-next-line no-undef
+  const publicKey = process.env.IMAGEKIT_PUBLIC_KEY;
+  // eslint-disable-next-line no-undef
+  const authenticationEndpoint = process.env.BACKEND_URL + "imagekitAuth";
+
+  useEffect(() => {
+    if (!Cookie.get("sosha_token")) {
+      console.log("false");
+      console.log(Cookie.get("sosha_token"));
+      window.location.href = "/login?previousPage=/profile";
+    }
+  });
+
+  const uploadToImageKit = async (image) => {
+    const formData = new FormData();
+    formData.append("file", image);
+    formData.append("fileName", image.name);
+    formData.append("publicKey", publicKey);
+    formData.append("folder", "/profile_pictures");
+    try {
+      const authenticate = await axios.get(authenticationEndpoint);
+
+      if (authenticate.status === 200) {
+        formData.append("token", authenticate.data.token);
+        formData.append("expire", authenticate.data.expire);
+        formData.append("signature", authenticate.data.signature);
+        try {
+          const response = await axios.post(
+            "https://upload.imagekit.io/api/v1/files/upload",
+            formData
+          );
+          return response;
+        } catch (error) {
+          return error.message;
+        }
+      }
+    } catch (error) {
+      return error.message;
+    }
+  };
+
+  const { loading, data, refetch } = useQuery(GET_USER, {
     onCompleted: () => {
       setState({
         ...state,
@@ -208,30 +251,13 @@ const Profile = () => {
     },
   });
 
-  useEffect(() => {
-    if (!Cookie.get("sosha_token")) {
-      window.location.href = "/login?previousPage=/profile";
-    }
-  });
   const imageReg = /\.(gif|jpe?g|tiff|png|webp|bmp)$/i;
 
   const handleChange = (e) => {
     if (e.target.name === "imageUrl") {
       if (imageReg.test(e.target.files[0].name)) {
-        const type = e.target.files[0].type.split("/")[1];
-
-        Resizer.imageFileResizer(
-          e.target.files[0],
-          100,
-          100,
-          type,
-          100,
-          0,
-          (uri) => {
-            setState({ ...state, imageUrl: uri });
-          },
-          "base64"
-        );
+        setState({ ...state, imageUrl: e.target.files[0] });
+        setImgPreview(URL.createObjectURL(e.target.files[0]));
         e.target.value = "";
       } else {
         e.target.value = "";
@@ -323,11 +349,16 @@ const Profile = () => {
     onCompleted: () => {
       setState(initialState);
       closeEdit();
+      refetch();
     },
   });
 
   const handleSubmit = async () => {
     setUpdate(true);
+    let cloudRes;
+    if (state.imageUrl) {
+      cloudRes = await uploadToImageKit(state.imageUrl);
+    }
     await updateProfile({
       variables: {
         id: data.user.id,
@@ -335,7 +366,7 @@ const Profile = () => {
         lastName: state.lastName.trim() || data.user.firstName,
         email: state.email.trim() || data.user.email,
         phone: state.phone || data.user.phone,
-        imgUrl: state.imageUrl || data.user.imgUrl,
+        imgUrl: cloudRes?.status == 200 ? cloudRes.data.url : data.user.imgUrl,
         birthdate: birthdate || data.user.birthdate,
         headline: state.headline.trim() || data.user.birthdate,
         bio: state.bio.trim() || data.user.bio,
@@ -374,7 +405,7 @@ const Profile = () => {
           setBirthdate={setBirthdate}
           email={state.email}
           phone={state.phone}
-          imageUrl={state.imageUrl}
+          imageUrl={imgPreview}
           headline={state.headline}
           bio={state.bio}
           country={state.country}

@@ -4,6 +4,7 @@ import friendsReducer from "./friendsReducer";
 import authReducer from "./authReducer";
 import chatReducer from "./chatsReducer";
 import postReducer from "./postsReducer";
+import countriesReducer from "./countriesReducer";
 
 export const store = configureStore({
   reducer: {
@@ -12,5 +13,6 @@ export const store = configureStore({
     authData: authReducer,
     chats: chatReducer,
     posts: postReducer,
+    countries: countriesReducer,
   },
 });
