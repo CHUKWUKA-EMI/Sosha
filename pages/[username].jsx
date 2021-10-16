@@ -17,7 +17,7 @@ import { makeStyles, withStyles } from "@material-ui/core/styles";
 import LocationOnIcon from "@material-ui/icons/LocationOn";
 import DateRangeIcon from "@material-ui/icons/DateRange";
 import { formatDate } from "../libs/dates";
-import { GET_USER_BY_NAME, SEND_FRIEND_REQUEST } from "../Apollo/queries";
+import { GET_USER_BY_NAME, ADD_TO_CONNECTIONS } from "../Apollo/queries";
 import * as cookie from "cookie";
 import { connectwithFriend } from "../redux/usersReducer";
 import { useDispatch } from "react-redux";
@@ -132,26 +132,23 @@ const User = ({ user }) => {
   const classes = useStyles();
   const dispatch = useDispatch();
   const [messages, setMessages] = React.useState({ success: "", failure: "" });
-  const [connectButtonState, setConnectButtonState] = React.useState({
-    disabled: false,
-    text: user.requeststatus == "pending" ? "Pending" : "Connect",
-  });
 
-  const [sendFriendRequest, { loading }] = useMutation(SEND_FRIEND_REQUEST, {
+  const [addToConnections, { loading }] = useMutation(ADD_TO_CONNECTIONS, {
     onError: () => {
       setMessages({ failure: "Something went wrong" });
       setTimeout(() => setMessages({ success: "", failure: "" }), 3000);
     },
     onCompleted: () => {
-      setMessages({ success: "Friend request sent!" });
-      setConnectButtonState({ disabled: true, text: "Pending" });
       dispatch(connectwithFriend(user.id));
-      setTimeout(() => setMessages({ success: "", failure: "" }), 3000);
+      window.location.href = `/messaging?friendId=${user.id}`;
     },
   });
-  const sendRequest = async () => {
+  const addConnection = async () => {
+    if (user.friendship === true) {
+      window.location.href = `/messaging?friendId=${user.id}`;
+    }
     try {
-      await sendFriendRequest({ variables: { friendId: user.id } });
+      await addToConnections({ variables: { friendId: user.id } });
     } catch (error) {
       console.log(error);
     }
@@ -304,15 +301,11 @@ const User = ({ user }) => {
                         className={classes.connectButton}
                         size="medium"
                         variant="text"
-                        disabled={
-                          loading ||
-                          connectButtonState.disabled ||
-                          user?.requeststatus == "pending"
-                        }
+                        disabled={loading || user?.requeststatus == "pending"}
                         style={{ marginTop: "0.5em" }}
-                        onClick={sendRequest}
+                        onClick={addConnection}
                       >
-                        {loading ? "Sending..." : connectButtonState.text}
+                        {loading ? "Connecting..." : "Message"}
                       </Button>
                     )}
                   </div>

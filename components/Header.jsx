@@ -193,7 +193,7 @@ const Header = () => {
           href="/"
         >
           <img
-            height="50"
+            height="40"
             src="https://ik.imagekit.io/chukwuka1991/soshaLogo_XZ2hnnLK4.png?updatedAt=1633679131698"
             alt="Logo"
           />

@@ -17,6 +17,7 @@ import {
   Person,
   Home,
   Menu,
+  People,
 } from "@material-ui/icons";
 import { makeStyles } from "@material-ui/core/styles";
 import CommunityNav from "../components/CommunityNav";
@@ -132,6 +133,11 @@ function Community(props) {
       title: "Feeds",
       href: "/feeds",
       icon: <Toc className={classes.icons} />,
+    },
+    {
+      title: "My Network",
+      href: "/network",
+      icon: <People className={classes.icons} />,
     },
     // {
     // 	title: "Explore",

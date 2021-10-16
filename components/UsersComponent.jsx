@@ -1,36 +1,62 @@
 import React from "react";
 import { useQuery, useMutation } from "@apollo/client";
-import { GET_ALL_USERS, SEND_FRIEND_REQUEST } from "../Apollo/queries";
+import { GET_ALL_USERS, ADD_TO_CONNECTIONS } from "../Apollo/queries";
 import Box from "@material-ui/core/Box";
+import Grid from "@material-ui/core/Grid";
 import makeStyles from "@material-ui/core/styles/makeStyles";
 import Typography from "@material-ui/core/Typography";
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
-import AddIcon from "@material-ui/icons/Add";
 import Snackbar from "@material-ui/core/Snackbar";
 import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
 import { getUsers, connectwithFriend } from "../redux/usersReducer";
+import { MailOutline } from "@material-ui/icons";
 
 const useStyles = makeStyles(() => ({
   root: {
     width: "100%",
+    paddingTop: "4rem",
+    marginLeft: "auto",
+    marginRight: "auto",
+    paddingBottom: "5rem",
   },
   info: {
     display: "flex",
     marginTop: "1em",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    "& .MuiAvatar-root": {
+      width: "9em",
+      height: "9em",
+    },
+  },
+  userBox: {
+    display: "flex",
+    flexDirection: "column",
+    border: "1px solid #e0e0e0",
+    marginTop: "1em",
+    borderRadius: "1em",
+    backgroundColor: "white",
   },
   connectButton: {
-    border: "2px solid darkgrey",
+    border: "none",
+    outline: "none",
     borderRadius: "1em",
     fontWeight: 600,
     textTransform: "none",
-    color: "darkgrey",
+    color: "white",
     fontSize: "15px",
+    backgroundColor: "rgb(29, 161, 242)",
   },
   userProfilelink: {
     textDecoration: "none",
     cursor: "pointer",
+  },
+  imgUrl: {
+    width: "9em",
+    height: "9em",
   },
 }));
 
@@ -51,28 +77,30 @@ export default function UsersComponent() {
     },
   });
 
-  const [sendFriendRequest, { loading: sendFriendRequestLoading }] =
-    useMutation(SEND_FRIEND_REQUEST, {
+  const [addToChatConnections, { loading: sendFriendRequestLoading }] =
+    useMutation(ADD_TO_CONNECTIONS, {
       onError: () => {
         setMessages({ failure: "Something went wrong" });
         setTimeout(() => setMessages({ success: "", failure: "" }), 3000);
       },
       onCompleted: () => {
-        setMessages({ success: "Friend request sent!" });
         dispatch(connectwithFriend(selectedUser.id));
-        setTimeout(() => setMessages({ success: "", failure: "" }), 3000);
+        window.location.href = `/messaging?friendId=${selectedUser.id}`;
       },
     });
-  const sendRequest = async (friendId) => {
+  const addToConnections = async (friendId) => {
+    if (selectedUser.friendship === true) {
+      window.location.href = `/messaging?friendId=${friendId}`;
+    }
     try {
-      await sendFriendRequest({ variables: { friendId } });
+      await addToChatConnections({ variables: { friendId } });
     } catch (error) {
       console.log(error);
     }
   };
 
   return (
-    <Box className={classes.root}>
+    <Grid container justify="space-evenly" spacing={6} className={classes.root}>
       {messages.failure ? (
         <Snackbar
           anchorOrigin={{
@@ -104,19 +132,42 @@ export default function UsersComponent() {
       {!loading ? (
         <>
           {users && users.length > 0 && (
-            <Typography
-              style={{ fontWeight: 600, textAlign: "center", color: "black" }}
-            >
-              People you can connect with
-            </Typography>
+            <Grid item xs={12}>
+              <Typography
+                variant="h4"
+                style={{
+                  textAlign: "center",
+                  fontSize: "2em",
+                  color: "darkslategray",
+                  fontWeight: "bold",
+                }}
+              >
+                People you may know
+              </Typography>
+            </Grid>
           )}
           {users &&
             users?.length > 0 &&
             users?.map((user) => (
-              <div id={user.id} ref={userRef} key={user.id}>
+              <Grid
+                item
+                xs={12}
+                sm={5}
+                md={3}
+                className={classes.userBox}
+                id={user.id}
+                ref={userRef}
+                key={user.id}
+              >
                 <Box className={classes.info}>
                   <Avatar src={user.imgUrl} />
-                  <Box style={{ marginLeft: "0.5em" }}>
+                  <Box
+                    style={{
+                      marginLeft: "0.5em",
+                      textAlign: "center",
+                      marginTop: "0.5em",
+                    }}
+                  >
                     <Link href={`/${user.username}`}>
                       <a className={classes.userProfilelink}>
                         <Typography
@@ -147,27 +198,28 @@ export default function UsersComponent() {
                     onClick={(e) => {
                       setSelectedUser(user);
                       e.stopPropagation();
-                      sendRequest(user.id);
+                      addToConnections(user.id);
                     }}
+                    style={{ marginTop: "0.5em" }}
                     className={classes.connectButton}
                     size="small"
                     variant="outlined"
                     disabled={
                       sendFriendRequestLoading && selectedUser.id === user.id
                     }
-                    startIcon={<AddIcon fontSize="large" />}
+                    startIcon={<MailOutline fontSize="large" />}
                   >
                     {sendFriendRequestLoading && selectedUser.id === user.id
                       ? "Connecting..."
-                      : "Connect"}
+                      : "Message"}
                   </Button>
                 </Box>
-              </div>
+              </Grid>
             ))}
         </>
       ) : (
         ""
       )}
-    </Box>
+    </Grid>
   );
 }

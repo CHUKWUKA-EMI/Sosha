@@ -33,15 +33,12 @@ import {
   NEW_TWEET,
   GET_FRIENDS,
 } from "../Apollo/queries";
-import { formatDate } from "../libs/dates";
 import EditPost from "./EditPost";
 import axios from "axios";
 import Link from "next/link";
 import Cookie from "js-cookie";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { getFriends } from "../redux/friendsReducer";
-import UsersComponent from "./UsersComponent";
-import FriendsComponent from "./FriendsComponent";
 import { setPosts, addPost } from "../redux/postsReducer";
 import PostsList from "./PostsList";
 
@@ -557,16 +554,6 @@ const Feed = () => {
             <Typography>{user.headline}</Typography>
           </Box>
         </Box>
-        <Box
-          style={{
-            backgroundColor: "white",
-            borderRadius: "1.5em",
-            padding: "1em",
-            marginTop: "1em",
-          }}
-        >
-          <FriendsComponent user={user} loading={friendsLoading} />
-        </Box>
       </Grid>
       <Grid xs={12} sm={6} item>
         {!openFeedForm && (
@@ -688,21 +675,7 @@ const Feed = () => {
                       id="icon-button-file"
                       type="file"
                     />
-                    {/* <IKContext
-                      publicKey={publicKey}
-                      urlEndpoint={urlEndpoint}
-                      authenticationEndpoint={authenticationEndpoint}
-                    >
-                      <IKUpload
-                        id="icon-button-file"
-                        name="imgUrl"
-                        onChange={handleImageUpload}
-                        style={{ display: "none" }}
-                        fileName={post.imgUrl}
-                        // onError={onError}
-                        // onSuccess={onSuccess}
-                      />
-                    </IKContext> */}
+
                     <label htmlFor="icon-button-file">
                       <IconButton
                         onClick={handleClick}
@@ -780,25 +753,11 @@ const Feed = () => {
           </div>
         )}
       </Grid>
-      <Grid style={{ paddingRight: "1em", paddingLeft: "1em" }} item sm={3}>
-        <Box style={{ marginTop: "1em", height: "100%", width: "100%" }}>
-          <img
-            src="/social-image.jpg"
-            style={{ width: "100%", height: "100%" }}
-            alt="Social Image"
-          />
-        </Box>
-        <Box
-          style={{
-            backgroundColor: "white",
-            borderRadius: "1.5em",
-            padding: "1em",
-            marginTop: "1em",
-          }}
-        >
-          <UsersComponent />
-        </Box>
-      </Grid>
+      <Grid
+        style={{ paddingRight: "1em", paddingLeft: "1em" }}
+        item
+        sm={3}
+      ></Grid>
     </Grid>
   );
 };

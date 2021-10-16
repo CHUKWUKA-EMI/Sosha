@@ -223,6 +223,7 @@ const Profile = () => {
   };
 
   const { loading, data, refetch } = useQuery(GET_USER, {
+    notifyOnNetworkStatusChange: true,
     onCompleted: () => {
       setState({
         ...state,
@@ -346,7 +347,8 @@ const Profile = () => {
         failure: "Sorry your request cannot be processed at the moment",
       });
     },
-    onCompleted: () => {
+    onCompleted: (data) => {
+      console.log("data", data);
       setState(initialState);
       closeEdit();
       refetch();

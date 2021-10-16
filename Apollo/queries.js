@@ -309,13 +309,15 @@ export const GET_ALL_USERS = gql`
       imgUrl
       headline
       username
+      friendship
+      blocked
     }
   }
 `;
 
-export const SEND_FRIEND_REQUEST = gql`
-  mutation sendFriendRequest($friendId: ID!) {
-    sendFriendRequest(friendId: $friendId) {
+export const ADD_TO_CONNECTIONS = gql`
+  mutation addToChatConnections($friendId: ID!) {
+    addToChatConnections(friendId: $friendId) {
       id
       requesterId
       friendId
@@ -401,8 +403,8 @@ export const CREATE_CHAT = gql`
   }
 `;
 export const GET_CHATS = gql`
-  query chats($friendshipId: ID!) {
-    chats(friendshipId: $friendshipId) {
+  query chats($receiverId: ID!, $senderId: ID!) {
+    chats(receiverId: $receiverId, senderId: $senderId) {
       _id
       senderId
       senderName
@@ -416,8 +418,8 @@ export const GET_CHATS = gql`
 `;
 
 export const NEW_MESSAGE = gql`
-  subscription newChat($friendshipId: ID!) {
-    newChat(friendshipId: $friendshipId) {
+  subscription newChat($receiverId: ID!, $senderId: ID!) {
+    newChat(receiverId: $receiverId, senderId: $senderId) {
       _id
       senderId
       senderName

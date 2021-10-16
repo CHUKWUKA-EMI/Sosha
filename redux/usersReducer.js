@@ -16,7 +16,8 @@ export const usersSlice = createSlice({
     },
 
     connectwithFriend: (state, { payload }) => {
-      state.users = state.users.filter((user) => user.id !== payload);
+      console.log("connectwithFriend", payload);
+      // state.users = state.users.filter((user) => user.id !== payload);
     },
   },
 });

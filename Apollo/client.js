@@ -34,6 +34,11 @@ const wsLink = process.browser
       uri: wsUrl,
       options: {
         reconnect: true,
+        connectionParams: {
+          Authorization: Cookie.get("sosha_token")
+            ? Cookie.get("sosha_token")
+            : "",
+        },
       },
     })
   : null;

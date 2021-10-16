@@ -302,9 +302,9 @@ const SignUp = () => {
   const [creatUser, { loading }] = useMutation(CREATE_USER, {
     ignoreResults: false,
     onError: (error) => {
-      console.log("error", error);
+      console.log("error", error.networkError);
       setMessages({
-        failure: "Sorry your request cannot be processed at the moment",
+        failure: error.message,
       });
     },
     onCompleted: () => {
