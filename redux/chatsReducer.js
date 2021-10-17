@@ -13,7 +13,11 @@ export const chatSlice = createSlice({
     },
     addChat: (state, { payload }) => {
       state.chats.push(payload);
-      state.selectedUser.lastMessage = payload.message;
+      state.connectedFriends.map((fr) => {
+        if (fr.userId === payload.userId) {
+          fr.lastMessage = payload.message;
+        }
+      });
     },
     setConnectedFriends: (state, { payload }) => {
       state.connectedFriends = payload;

@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 /* eslint-disable react/prop-types */
 import React from "react";
-import { useMutation } from "@apollo/client";
+import { useMutation, useSubscription } from "@apollo/client";
 import {
   Box,
   Typography,
@@ -23,13 +23,19 @@ import {
 import { makeStyles, withStyles } from "@material-ui/core/styles";
 import "emoji-mart/css/emoji-mart.css";
 import { useRouter } from "next/router";
-import { UPDATE_TWEET, DELETE_TWEET } from "../Apollo/queries";
+import {
+  UPDATE_TWEET,
+  DELETE_TWEET,
+  LIKE_POST,
+  UNLIKE_POST,
+  NEW_LIKE,
+} from "../Apollo/queries";
 import { formatDate } from "../libs/dates";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import ShareHeader from "./SocialShareHeader";
 import ShareComponent from "./SocialShareComponent";
-import { deletePost } from "../redux/postsReducer";
+import { deletePost, likePost, unlikePost } from "../redux/postsReducer";
 import PostSettingsPopover from "./PostSettingsPopover";
 import CommentsComponent from "./Comments";
 import CommentBox from "./CommentBox";
@@ -171,6 +177,17 @@ const useStyles = makeStyles((theme) => ({
       backgroundColor: "lightgrey",
     },
   },
+  brkText: {
+    cursor: "pointer",
+    marginLeft: "0.5em",
+    color: "darkslategrey",
+    fontWeight: 700,
+    fontSize: "1em",
+    "&:hover": {
+      textDecoration: "underline",
+      color: "blue",
+    },
+  },
 }));
 
 const StyledBadge = withStyles((theme) => ({
@@ -207,6 +224,7 @@ export default function PostsList({ user }) {
     imagekit_fileId: "",
   });
   const [openComments, setOpenComments] = React.useState(false);
+  const [fullPostView, setFullPostView] = React.useState(false);
   const [autofocus, setAutoFocus] = React.useState(false);
 
   const urlEndpoint = process.env.IMAGEKIT_URL_ENDPOINT;
@@ -230,11 +248,24 @@ export default function PostsList({ user }) {
   const openSettingsPopover = Boolean(settingsAnchor);
   const settingsPopoverId = openSettingsPopover ? "simple-popover" : undefined;
 
-  const breakText = (str) => {
-    if (str.length > 140) {
-      return `${str.slice(0, 140)}...`;
-    }
-    return str;
+  const BreakText = ({ str }) => {
+    return (
+      <>
+        {str.length > 140 ? (
+          <>
+            {str.slice(0, 140)}
+            <a
+              className={classes.brkText}
+              onClick={() => setFullPostView(true)}
+            >
+              ...see more
+            </a>
+          </>
+        ) : (
+          str
+        )}
+      </>
+    );
   };
 
   const clearError = () => {
@@ -345,7 +376,6 @@ export default function PostsList({ user }) {
       //upload image to imagekit
       if (selectedTweet.imgUrl == "" && post.imgUrl != undefined) {
         const cloudRes = await uploadToImageKit(post.imgUrl);
-        console.log("cloud res", cloudRes);
         if (cloudRes.status == 200) {
           await updateTweet({
             variables: {
@@ -375,6 +405,64 @@ export default function PostsList({ user }) {
     } catch (e) {
       setPosting(false);
       console.log(e);
+    }
+  };
+
+  const handleCommentsOpen = (tweet) => {
+    if (tweet.id === selectedTweet.id) {
+      setOpenComments(!openComments);
+    }
+  };
+
+  //LIKES SUBSCRIPTION
+  useSubscription(NEW_LIKE, {
+    variables: { TweetId: selectedTweet?.id },
+    onSubscriptionData: ({ subscriptionData }) => {
+      const { newLike } = subscriptionData.data;
+      dispatch(likePost(newLike));
+    },
+  });
+
+  //ADD LIKE
+  const [createLike, { loading: addingLike }] = useMutation(LIKE_POST, {
+    ignoreResults: false,
+    onError: (error) => {
+      console.log("error", error);
+    },
+  });
+
+  const addLike = async (id) => {
+    try {
+      await createLike({
+        variables: {
+          TweetId: id,
+        },
+      });
+    } catch (error) {
+      console.log("likes error", error.message);
+    }
+  };
+
+  //UNLIKE
+  const [unLike, { loading: unliking }] = useMutation(UNLIKE_POST, {
+    ignoreResults: false,
+    onError: (error) => {
+      console.log("error", error);
+    },
+    onCompleted: (data) => {
+      dispatch(unlikePost({ TweetId: selectedTweet.id, likeId: data.unlike }));
+    },
+  });
+
+  const removeLike = async (id) => {
+    try {
+      await unLike({
+        variables: {
+          TweetId: id,
+        },
+      });
+    } catch (error) {
+      console.log("likes error", error.message);
     }
   };
 
@@ -493,7 +581,11 @@ export default function PostsList({ user }) {
                         color: "black",
                       }}
                     >
-                      {breakText(tweet.content)}
+                      {!fullPostView ? (
+                        <BreakText str={tweet.content} />
+                      ) : (
+                        tweet.content
+                      )}
                     </Typography>
                   </Box>
                 ) : (
@@ -530,7 +622,8 @@ export default function PostsList({ user }) {
                   )}
                   <a
                     className={classes.commentsView}
-                    onClick={() => setOpenComments(!openComments)}
+                    onMouseOver={() => setSelectedTweet(tweet)}
+                    onClick={() => handleCommentsOpen(tweet)}
                   >
                     {tweet.Comments?.length > 0
                       ? tweet.Comments.length > 1
@@ -555,11 +648,34 @@ export default function PostsList({ user }) {
                 <Button
                   size="medium"
                   variant="text"
-                  // href={`/feed/${tweet.id}`}
+                  style={{
+                    color: tweet.Likes.find((like) => like.UserId === user.id)
+                      ? "rgb(29, 161, 242)"
+                      : "",
+                    backgroundColor: addingLike || unliking ? "lightgray" : "",
+                  }}
+                  disabled={addingLike || unliking}
+                  onMouseOver={() => setSelectedTweet(tweet)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (tweet.Likes.find((like) => like.UserId === user.id)) {
+                      removeLike(tweet.id);
+                    } else {
+                      addLike(tweet.id);
+                    }
+                  }}
                   className={classes.ctas}
-                  startIcon={<ThumbUpOutlined style={{ color: "grey" }} />}
+                  startIcon={
+                    tweet.Likes.find((like) => like.UserId === user.id) ? (
+                      <ThumbUp style={{ color: "rgb(29, 161, 242)" }} />
+                    ) : (
+                      <ThumbUpOutlined style={{ color: "grey" }} />
+                    )
+                  }
                 >
-                  Like
+                  {tweet.Likes.find((like) => like.UserId === user.id)
+                    ? "Unlike"
+                    : "Like"}
                 </Button>
                 <Button
                   onClick={() => setAutoFocus(true)}
@@ -593,12 +709,14 @@ export default function PostsList({ user }) {
                 />
               </Box>
               <Divider variant="fullWidth" />
-              <CommentBox user={user} autofocus={autofocus} />
-              {openComments && (
+              <CommentBox user={user} tweet={tweet} autofocus={autofocus} />
+              {openComments && tweet.id === selectedTweet.id && (
                 <React.Fragment>
                   {tweet.Comments?.length > 0 &&
                     tweet.Comments.map((comment, index) => (
-                      <CommentsComponent key={index} comment={comment} />
+                      <div key={index}>
+                        <CommentsComponent comment={comment} />
+                      </div>
                     ))}
                 </React.Fragment>
               )}

@@ -172,6 +172,14 @@ export const ADD_COMMENT = gql`
       id
       comment
       createdAt
+      TweetId
+      User {
+        id
+        firstName
+        lastName
+        headline
+        imgUrl
+      }
     }
   }
 `;
@@ -182,13 +190,15 @@ export const COMMENTS_SUBSCRIPTION = gql`
       id
       comment
       createdAt
+      TweetId
+      User {
+        id
+        firstName
+        lastName
+        headline
+        imgUrl
+      }
     }
-  }
-`;
-
-export const LIKE_POST = gql`
-  mutation like($TweetId: ID!) {
-    like(TweetId: $TweetId)
   }
 `;
 
@@ -376,6 +386,7 @@ export const GET_CONNECTED_FRIENDS = gql`
       imgUrl
       headline
       username
+      lastMessage
     }
   }
 `;
@@ -403,8 +414,8 @@ export const CREATE_CHAT = gql`
   }
 `;
 export const GET_CHATS = gql`
-  query chats($receiverId: ID!, $senderId: ID!) {
-    chats(receiverId: $receiverId, senderId: $senderId) {
+  query chats($friendshipId: ID!) {
+    chats(friendshipId: $friendshipId) {
       _id
       senderId
       senderName
@@ -418,8 +429,8 @@ export const GET_CHATS = gql`
 `;
 
 export const NEW_MESSAGE = gql`
-  subscription newChat($receiverId: ID!, $senderId: ID!) {
-    newChat(receiverId: $receiverId, senderId: $senderId) {
+  subscription newChat($friendshipId: ID!) {
+    newChat(friendshipId: $friendshipId) {
       _id
       senderId
       senderName
@@ -429,5 +440,49 @@ export const NEW_MESSAGE = gql`
       message
       createdAt
     }
+  }
+`;
+
+export const NEW_LIKE = gql`
+  subscription newLike($TweetId: ID!) {
+    newLike(TweetId: $TweetId) {
+      id
+      UserId
+      value
+      User {
+        id
+        firstName
+        lastName
+        imgUrl
+        headline
+      }
+      TweetId
+      createdAt
+    }
+  }
+`;
+
+export const LIKE_POST = gql`
+  mutation like($TweetId: ID!) {
+    like(TweetId: $TweetId) {
+      id
+      UserId
+      value
+      User {
+        id
+        firstName
+        lastName
+        imgUrl
+        headline
+      }
+      TweetId
+      createdAt
+    }
+  }
+`;
+
+export const UNLIKE_POST = gql`
+  mutation unlike($TweetId: ID!) {
+    unlike(TweetId: $TweetId)
   }
 `;

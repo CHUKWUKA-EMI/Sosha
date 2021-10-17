@@ -24,12 +24,12 @@ import {
 import { makeStyles, withStyles } from "@material-ui/core/styles";
 import Skeleton from "@material-ui/lab/Skeleton";
 import "emoji-mart/css/emoji-mart.css";
-import { Picker } from "emoji-mart";
+import emojidata from "emoji-mart/data/twitter.json";
+import { NimblePicker } from "emoji-mart";
 import { useRouter } from "next/router";
 import {
   CREATE_TWEET,
   GET_TWEETS,
-  ADD_COMMENT,
   NEW_TWEET,
   GET_FRIENDS,
 } from "../Apollo/queries";
@@ -410,39 +410,6 @@ const Feed = () => {
     }
   };
 
-  //ADD COMMENT
-  const [createComment, cdata] = useMutation(ADD_COMMENT, {
-    ignoreResults: false,
-    onError: (error) => {
-      console.log("error", error);
-      setMessages({
-        failure: "Sorry, something went wrong ",
-      });
-      clearMessages();
-    },
-    onCompleted: () => {
-      clearMessages();
-      setComment("");
-    },
-  });
-
-  const addComment = async (tweetId) => {
-    if (comment.trim().length == 0) {
-      return;
-    }
-
-    try {
-      await createComment({
-        variables: {
-          TweetId: tweetId,
-          comment: comment,
-        },
-      });
-    } catch (error) {
-      console.log("comment error", error.message);
-    }
-  };
-
   const removeImage = () => {
     setPost({ ...post, imgUrl: "" });
     setImgPreview("");
@@ -577,7 +544,8 @@ const Feed = () => {
               variant="outlined"
               onClick={() => setOpenFeedForm(true)}
               style={{
-                borderRadius: "0.5em",
+                borderRadius: "2em",
+                height: "4em",
                 textTransform: "none",
                 fontWeight: "bold",
                 color: "darkslategrey",
@@ -591,6 +559,7 @@ const Feed = () => {
           <Box className={classes.feedbox}>
             <form
               onSubmit={(e) => {
+                setEmojiPicker(false);
                 e.preventDefault();
                 handleSubmit();
               }}
@@ -701,6 +670,24 @@ const Feed = () => {
                       }}
                     />
                   </IconButton>
+                  {emojiPicker ? (
+                    <div
+                      style={{ position: "absolute", zIndex: 1, top: "18em" }}
+                    >
+                      <NimblePicker
+                        style={{ position: "absolute", zIndex: 1 }}
+                        title="Pick your emoji…"
+                        emoji="point_up"
+                        theme="dark"
+                        set="twitter"
+                        data={emojidata}
+                        emojiTooltip={true}
+                        onSelect={(emoji) => onEmojiClick(emoji.native)}
+                      />
+                    </div>
+                  ) : (
+                    ""
+                  )}
                 </div>
                 <div>
                   <Button
@@ -712,25 +699,12 @@ const Feed = () => {
                     type="submit"
                     className={classes.feedButton}
                   >
-                    {posting ? "POSTING..." : "POST"}
+                    {posting ? "Processing..." : "SUBMIT"}
                   </Button>
                 </div>
               </Box>
             </form>
           </Box>
-        )}
-        {emojiPicker ? (
-          <div style={{ position: "absolute", zIndex: 1 }}>
-            <Picker
-              style={{ position: "absolute", zIndex: 1 }}
-              title="Pick your emoji…"
-              emoji="point_up"
-              emojiTooltip={true}
-              onSelect={(emoji) => onEmojiClick(emoji.native)}
-            />
-          </div>
-        ) : (
-          ""
         )}
 
         {!loading ? (

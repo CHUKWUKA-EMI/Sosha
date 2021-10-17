@@ -2,6 +2,10 @@
 import React from "react";
 import { TextareaAutosize, Avatar, Box, Button } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
+import { useDispatch } from "react-redux";
+import { ADD_COMMENT, COMMENTS_SUBSCRIPTION } from "../Apollo/queries";
+import { useMutation, useSubscription } from "@apollo/client";
+import { addAComment, setSelectedPost } from "../redux/postsReducer";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -64,9 +68,48 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function CommentBox({ user, autofocus }) {
+export default function CommentBox({ user, tweet, autofocus }) {
   const classes = useStyles();
+  const dispatch = useDispatch();
   const [comment, setComment] = React.useState("");
+
+  //COMMENT SUBSCRIPTION
+  useSubscription(COMMENTS_SUBSCRIPTION, {
+    variables: { TweetId: tweet?.id },
+    onSubscriptionData: ({ subscriptionData }) => {
+      const { newComment } = subscriptionData.data;
+      dispatch(addAComment(newComment));
+    },
+  });
+
+  //ADD COMMENT
+  const [createComment, { loading: addingComment }] = useMutation(ADD_COMMENT, {
+    ignoreResults: false,
+    onError: (error) => {
+      console.log("error", error);
+    },
+    onCompleted: () => {
+      setComment("");
+    },
+  });
+
+  const addComment = async () => {
+    if (comment.trim().length == 0) {
+      return;
+    }
+
+    try {
+      await createComment({
+        variables: {
+          TweetId: tweet.id,
+          comment: comment,
+        },
+      });
+    } catch (error) {
+      console.log("comment error", error.message);
+    }
+  };
+
   return (
     <Box
       style={{
@@ -80,8 +123,9 @@ export default function CommentBox({ user, autofocus }) {
       <form
         style={{ width: "80%" }}
         onSubmit={(e) => {
+          dispatch(setSelectedPost(tweet));
           e.preventDefault();
-          // addComment(tweet.id);
+          addComment();
         }}
       >
         <TextareaAutosize
@@ -102,7 +146,7 @@ export default function CommentBox({ user, autofocus }) {
         />
         {comment.trim().length > 0 && (
           <Button
-            //   onClick={() => addComment(tweet.id)}
+            type="submit"
             style={{
               borderRadius: "1em",
               backgroundColor: "#32506D",
@@ -110,11 +154,11 @@ export default function CommentBox({ user, autofocus }) {
               textTransform: "lowercase",
               marginLeft: "1em",
             }}
+            disabled={addingComment}
             size="small"
-            type="submit"
             variant="contained"
           >
-            Send
+            {addingComment ? "..." : "Send"}
           </Button>
         )}
       </form>

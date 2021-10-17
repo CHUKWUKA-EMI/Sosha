@@ -74,12 +74,20 @@ const Messaging = () => {
   const [user, setUser] = useState({});
   const selectedUser = useSelector((state) => state.chats.selectedUser);
 
+  useEffect(() => {
+    const localUser = JSON.parse(localStorage.getItem("sosha_user"));
+    const token = cookies.get("sosha_token");
+    if (!token) {
+      router.push("/login?previousPage=/messaging");
+    }
+    setUser(localUser);
+  }, []);
+
   const [getChats, { data, loading, error }] = useLazyQuery(GET_CHATS, {
     onError: () => {
       console.log("error", error);
     },
     onCompleted: () => {
-      console.log("data", data);
       dispatch(setChats(data.chats));
     },
   });
@@ -92,9 +100,7 @@ const Messaging = () => {
   );
 
   useEffect(() => {
-    if (newMessageError) console.log("newMessageError", newMessageError);
     if (newMessageData && selectedUser) {
-      console.log("newMessageData", newMessageData);
       dispatch(addChat(newMessageData.newChat));
     }
   }, [newMessageError, newMessageData]);
@@ -104,15 +110,6 @@ const Messaging = () => {
       getChats({ variables: { friendshipId: selectedUser?.friend.id } });
     }
   }, [selectedUser]);
-
-  useEffect(() => {
-    const localUser = JSON.parse(localStorage.getItem("user"));
-    const token = cookies.get("token");
-    if (!token) {
-      router.push("/login?previousPage=/messaging");
-    }
-    setUser(localUser);
-  }, []);
 
   return (
     <div className={classes.root}>

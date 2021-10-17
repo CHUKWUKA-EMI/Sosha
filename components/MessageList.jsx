@@ -45,7 +45,12 @@ const useStyles = makeStyles(() => ({
 
 export default function MessageList() {
   const classes = useStyles();
-  const messages = useSelector((state) => state.chats.chats);
+  const selectedUser = useSelector((state) => state.chats.selectedUser);
+  let messages = useSelector((state) => state.chats.chats);
+
+  messages = messages?.filter(
+    (message) => message.friendshipId === selectedUser.friend.id
+  );
 
   const [user, setUser] = useState({});
 
@@ -58,7 +63,6 @@ export default function MessageList() {
   useEffect(() => {
     const localUser = JSON.parse(localStorage.getItem("sosha_user"));
     setUser(localUser);
-    console.log("messagesRef", document.getElementById("box"));
   }, []);
 
   useEffect(() => {

@@ -10,7 +10,8 @@ import Button from "@material-ui/core/Button";
 import Snackbar from "@material-ui/core/Snackbar";
 import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
-import { getUsers, connectwithFriend } from "../redux/usersReducer";
+import { getUsers } from "../redux/usersReducer";
+import { selectUser } from "../redux/chatsReducer";
 import { MailOutline } from "@material-ui/icons";
 
 const useStyles = makeStyles(() => ({
@@ -49,6 +50,9 @@ const useStyles = makeStyles(() => ({
     color: "white",
     fontSize: "15px",
     backgroundColor: "rgb(29, 161, 242)",
+    "&:hover": {
+      backgroundColor: "rgb(29, 161, 242)",
+    },
   },
   userProfilelink: {
     textDecoration: "none",
@@ -64,15 +68,13 @@ export default function UsersComponent() {
   const classes = useStyles();
   const dispatch = useDispatch();
   const users = useSelector((state) => state.users.users);
+  const connectedFriends = useSelector((state) => state.chats.connectedFriends);
   const [messages, setMessages] = React.useState({ success: "", failure: "" });
-  // const [data, setData] = React.useState([]);
   const [selectedUser, setSelectedUser] = React.useState({});
   const userRef = React.useRef(null);
 
   const { loading, data: usersData } = useQuery(GET_ALL_USERS, {
     onCompleted: () => {
-      // setData(usersData);
-      console.log("usersData", usersData);
       dispatch(getUsers(usersData.getAllUsers));
     },
   });
@@ -80,22 +82,29 @@ export default function UsersComponent() {
   const [addToChatConnections, { loading: sendFriendRequestLoading }] =
     useMutation(ADD_TO_CONNECTIONS, {
       onError: () => {
-        setMessages({ failure: "Something went wrong" });
+        setMessages({ failure: "Something went wrong. Please retry" });
         setTimeout(() => setMessages({ success: "", failure: "" }), 3000);
       },
       onCompleted: () => {
-        dispatch(connectwithFriend(selectedUser.id));
-        window.location.href = `/messaging?friendId=${selectedUser.id}`;
+        window.location.href = `/messaging`;
       },
     });
+
   const addToConnections = async (friendId) => {
-    if (selectedUser.friendship === true) {
-      window.location.href = `/messaging?friendId=${friendId}`;
-    }
     try {
       await addToChatConnections({ variables: { friendId } });
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const handleRedirect = (friendId) => {
+    const friend = connectedFriends?.find((fr) => fr.userId === friendId);
+    if (friend) {
+      dispatch(selectUser(friend));
+      window.location.href = `/messaging`;
+    } else {
+      window.location.href = `/messaging`;
     }
   };
 
@@ -195,14 +204,18 @@ export default function UsersComponent() {
                 >
                   <Button
                     type="button"
-                    onClick={(e) => {
-                      setSelectedUser(user);
-                      e.stopPropagation();
-                      addToConnections(user.id);
+                    onClick={() => {
+                      if (user.friendship) {
+                        handleRedirect(user.id);
+                      } else {
+                        setSelectedUser(user);
+                        addToConnections(user.id);
+                      }
                     }}
                     style={{ marginTop: "0.5em" }}
                     className={classes.connectButton}
                     size="small"
+                    fullWidth
                     variant="outlined"
                     disabled={
                       sendFriendRequestLoading && selectedUser.id === user.id
