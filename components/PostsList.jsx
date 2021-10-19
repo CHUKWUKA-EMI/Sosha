@@ -649,7 +649,7 @@ export default function PostsList({ user }) {
                   size="medium"
                   variant="text"
                   style={{
-                    color: tweet.Likes.find((like) => like.UserId === user.id)
+                    color: tweet.Likes?.find((like) => like.UserId === user.id)
                       ? "rgb(29, 161, 242)"
                       : "",
                     backgroundColor: addingLike || unliking ? "lightgray" : "",
@@ -658,7 +658,7 @@ export default function PostsList({ user }) {
                   onMouseOver={() => setSelectedTweet(tweet)}
                   onClick={(e) => {
                     e.preventDefault();
-                    if (tweet.Likes.find((like) => like.UserId === user.id)) {
+                    if (tweet.Likes?.find((like) => like.UserId === user.id)) {
                       removeLike(tweet.id);
                     } else {
                       addLike(tweet.id);
@@ -666,14 +666,14 @@ export default function PostsList({ user }) {
                   }}
                   className={classes.ctas}
                   startIcon={
-                    tweet.Likes.find((like) => like.UserId === user.id) ? (
+                    tweet.Likes?.find((like) => like.UserId === user.id) ? (
                       <ThumbUp style={{ color: "rgb(29, 161, 242)" }} />
                     ) : (
                       <ThumbUpOutlined style={{ color: "grey" }} />
                     )
                   }
                 >
-                  {tweet.Likes.find((like) => like.UserId === user.id)
+                  {tweet.Likes?.find((like) => like.UserId === user.id)
                     ? "Unlike"
                     : "Like"}
                 </Button>
