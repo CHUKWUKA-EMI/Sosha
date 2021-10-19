@@ -146,7 +146,7 @@ function Feed({ tweet }) {
     const localUser = JSON.parse(localStorage.getItem("user"));
     setUser(localUser);
     if (user != null) {
-      const userLike = tweet.Likes.find((c) => c.UserId == user.id);
+      const userLike = tweet.Likes?.find((c) => c.UserId == user.id);
       if (userLike) {
         setLiked(true);
       } else {
