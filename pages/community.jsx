@@ -14,16 +14,18 @@ import {
   Toc,
   Chat,
   Notifications,
-  Person,
+  // Person,
   Home,
   Menu,
   People,
+  ArrowDropDown,
 } from "@material-ui/icons";
 import { makeStyles } from "@material-ui/core/styles";
 import CommunityNav from "../components/CommunityNav";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Cookie from "js-cookie";
+import DropDown from "../components/DropDown";
 
 let drawerWidth = 25;
 const useStyles = makeStyles((theme) => ({
@@ -114,6 +116,12 @@ const useStyles = makeStyles((theme) => ({
     "@media screen and (max-width: 760px)": {
       textAlign: "left",
     },
+    "& .MuiButton-label": {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+    },
   },
 }));
 
@@ -122,6 +130,14 @@ function Community(props) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [user, setUser] = React.useState({});
+  const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const handleClick = (event) => {
+    setAnchorEl(anchorEl ? null : event.currentTarget);
+  };
+
+  const open = Boolean(anchorEl);
+  const id = open ? "simple-popper" : undefined;
 
   const navItems = [
     {
@@ -154,11 +170,11 @@ function Community(props) {
       href: "/notification",
       icon: <Notifications className={classes.icons} />,
     },
-    {
-      title: "Profile",
-      href: "/profile",
-      icon: <Person className={classes.icons} />,
-    },
+    // {
+    //   title: "Profile",
+    //   href: "/profile",
+    //   icon: <Person className={classes.icons} />,
+    // },
   ];
 
   const handleDrawerToggle = () => {
@@ -184,7 +200,7 @@ function Community(props) {
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: "space-around",
           }}
         >
           <IconButton
@@ -206,18 +222,40 @@ function Community(props) {
                       color:
                         router.pathname === nav.href ? "rgb(29, 161, 242)" : "",
                       fontWeight: router.pathname === nav.href ? 900 : "",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
-                    startIcon={nav.icon}
+                    // startIcon={nav.icon}
                   >
+                    {nav.icon}
                     {nav.title}
                   </Button>
                 </Link>
               ))}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}
+                aria-describedby={id}
+                onClick={handleClick}
+              >
+                <Avatar style={{ fontSize: "0.5em" }} src={user.imgUrl} />
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <div style={{ color: "#32506D", fontWeight: "bold" }}>Me</div>
+                  <ArrowDropDown style={{ fontSize: "2em" }} color="primary" />
+                </div>
+              </div>
             </Hidden>
           </div>
         </Toolbar>
       </AppBar>
-
+      <DropDown anchorEl={anchorEl} user={user} open={open} id={id} />
       <nav aria-label="community nav">
         <Hidden smUp implementation="css">
           <Drawer

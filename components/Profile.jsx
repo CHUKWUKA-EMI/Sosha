@@ -9,9 +9,8 @@ import {
   Tabs,
   Tab,
   Link,
-  Badge,
 } from "@material-ui/core";
-import { makeStyles, withStyles } from "@material-ui/core/styles";
+import { makeStyles } from "@material-ui/core/styles";
 import Skeleton from "@material-ui/lab/Skeleton";
 import EditProfile from "./EditProfile";
 import LocationOnIcon from "@material-ui/icons/LocationOn";
@@ -157,19 +156,6 @@ const initialMessages = {
   failure: "",
 };
 
-const StyledBadge = withStyles((theme) => ({
-  badge: {
-    right: "-9.5rem",
-    top: "10rem",
-    border: `2px solid ${theme.palette.background.paper}`,
-    padding: "0 4px",
-    borderRadius: "50%",
-    background: "green",
-    height: "1rem",
-    width: "1rem",
-  },
-}))(Badge);
-
 const Profile = () => {
   const classes = useStyles();
   const [value, setValue] = useState(0);
@@ -188,8 +174,6 @@ const Profile = () => {
 
   useEffect(() => {
     if (!Cookie.get("sosha_token")) {
-      console.log("false");
-      console.log(Cookie.get("sosha_token"));
       window.location.href = "/login?previousPage=/profile";
     }
   });
@@ -431,26 +415,48 @@ const Profile = () => {
               height: "8rem",
             }}
           >
-            <StyledBadge
-              style={{ color: "red" }}
-              overlap="circle"
-              badgeContent=" "
-              variant="dot"
-            >
-              {
-                <Avatar
-                  className={classes.imgArea}
-                  src={data ? data.user.imgUrl : ""}
-                />
-              }
-            </StyledBadge>
+            <Avatar
+              className={classes.imgArea}
+              src={data ? data.user.imgUrl : ""}
+            />
           </Box>
           <Box style={{ background: "#fff", paddingBottom: "2rem" }}>
             <Box className={classes.infobox}>
               <div style={{ width: "70%" }}>
-                <Typography style={{ fontSize: "2em" }} variant="h4">{`${
-                  data ? data.user.firstName : ""
-                } ${data ? data.user.lastName : ""}`}</Typography>
+                <Typography style={{ fontSize: "2em" }} variant="h5">
+                  {`${data ? data.user.firstName : ""} ${
+                    data ? data.user.lastName : ""
+                  }`}{" "}
+                  {data && data.user.isLoggedIn ? (
+                    <span
+                      style={{
+                        color: "green",
+                        border: "1px solid green",
+                        fontWeight: "bold",
+                        fontSize: "small",
+                        outline: "none",
+                        padding: "2px",
+                        borderRadius: "5px",
+                      }}
+                    >
+                      Online
+                    </span>
+                  ) : (
+                    <span
+                      style={{
+                        color: "grey",
+                        border: "1px solid grey",
+                        fontWeight: "bold",
+                        fontSize: "small",
+                        outline: "none",
+                        padding: "2px",
+                        borderRadius: "5px",
+                      }}
+                    >
+                      Offline
+                    </span>
+                  )}
+                </Typography>
                 <Typography style={{ marginBottom: "0.6rem" }} variant="body1">
                   @{`${data ? data.user.firstName.toLowerCase() : ""}`}_
                   {`${data ? data.user.lastName.toLowerCase() : ""}`}
@@ -589,17 +595,8 @@ const Profile = () => {
                     fontSize: "17px",
                     fontWeight: "bold",
                   }}
-                  label="Posts & Comments"
+                  label="Photos"
                   {...a11yProps(1)}
-                />
-                <Tab
-                  style={{
-                    color: "black",
-                    fontSize: "17px",
-                    fontWeight: "bold",
-                  }}
-                  label="Likes"
-                  {...a11yProps(2)}
                 />
               </Tabs>
             </AppBar>
@@ -607,10 +604,7 @@ const Profile = () => {
               Posts
             </TabPanel>
             <TabPanel value={value} index={1}>
-              Posts and Comments
-            </TabPanel>
-            <TabPanel value={value} index={2}>
-              Likes
+              Photos
             </TabPanel>
           </Box>
         </Box>

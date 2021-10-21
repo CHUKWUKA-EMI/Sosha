@@ -217,6 +217,8 @@ export const GET_USER = gql`
       country
       state
       website
+      isLoggedIn
+      user_role
       sex
       createdAt
       Tweets {
