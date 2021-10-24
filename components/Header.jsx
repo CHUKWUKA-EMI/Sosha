@@ -194,7 +194,7 @@ const Header = () => {
         >
           <img
             height="40"
-            src="https://ik.imagekit.io/chukwuka1991/soshaLogo_XZ2hnnLK4.png?updatedAt=1633679131698"
+            src="https://ik.imagekit.io/chukwuka1991/Component_4ZAw9YtQAa.png?updatedAt=1635083451062"
             alt="Logo"
           />
         </a>

@@ -14,6 +14,7 @@ import {
   Snackbar,
   Grid,
   Paper,
+  Hidden,
 } from "@material-ui/core";
 import Chip from "@material-ui/core/Chip";
 import {
@@ -461,6 +462,8 @@ const Feed = () => {
         success: "",
         failure: "Video size cannot exceed 10MB",
       });
+      setPost({ ...post, videoUrl: "" });
+      setVideoPreview("");
       clearMessages();
       return;
     }
@@ -472,14 +475,15 @@ const Feed = () => {
           failure:
             "Video duration cannot be more than 10 minutes. Please trim your video and retry",
         });
+        setPost({ ...post, videoUrl: "" });
+        setVideoPreview("");
         clearMessages();
         return;
       }
     };
-    if (e.target.files[0] && e.target.files[0].type.includes("video")) {
-      setPost({ ...post, videoUrl: e.target.files[0] });
-      setVideoPreview(URL.createObjectURL(e.target.files[0]));
-    }
+
+    setPost({ ...post, videoUrl: e.target.files[0] });
+    setVideoPreview(URL.createObjectURL(e.target.files[0]));
   };
 
   return (
@@ -586,39 +590,41 @@ const Feed = () => {
         ""
       )}
 
-      <Grid style={{ paddingRight: "1em", paddingLeft: "1em" }} item sm={3}>
-        <Box
-          style={{
-            backgroundColor: "white",
-            borderRadius: "1.5em",
-            padding: "1em",
-            marginTop: "1em",
-          }}
-        >
-          <Box style={{ display: "flex", marginBottom: "1em" }}>
-            <Avatar
-              style={{
-                width: "3rem",
-                height: "3rem",
-                marginLeft: "auto",
-                marginRight: "auto",
-              }}
-              src={user ? user.imgUrl : ""}
-              className={classes.imgArea}
-            />
+      <Hidden xsDown>
+        <Grid style={{ paddingRight: "1em", paddingLeft: "1em" }} item sm={3}>
+          <Box
+            style={{
+              backgroundColor: "white",
+              borderRadius: "1.5em",
+              padding: "1em",
+              marginTop: "1em",
+            }}
+          >
+            <Box style={{ display: "flex", marginBottom: "1em" }}>
+              <Avatar
+                style={{
+                  width: "3rem",
+                  height: "3rem",
+                  marginLeft: "auto",
+                  marginRight: "auto",
+                }}
+                src={user ? user.imgUrl : ""}
+                className={classes.imgArea}
+              />
+            </Box>
+            <Box style={{ textAlign: "center" }}>
+              <Typography
+                style={{
+                  color: "#32506D",
+                  fontWeight: "bold",
+                  fontSize: "18px",
+                }}
+              >{`${user.firstName} ${user.lastName}`}</Typography>
+              <Typography>{user.headline}</Typography>
+            </Box>
           </Box>
-          <Box style={{ textAlign: "center" }}>
-            <Typography
-              style={{
-                color: "#32506D",
-                fontWeight: "bold",
-                fontSize: "18px",
-              }}
-            >{`${user.firstName} ${user.lastName}`}</Typography>
-            <Typography>{user.headline}</Typography>
-          </Box>
-        </Box>
-      </Grid>
+        </Grid>
+      </Hidden>
       <Grid xs={12} sm={6} item>
         {!openFeedForm && (
           <Box
@@ -926,11 +932,13 @@ const Feed = () => {
           </div>
         )}
       </Grid>
-      <Grid
-        style={{ paddingRight: "1em", paddingLeft: "1em" }}
-        item
-        sm={3}
-      ></Grid>
+      <Hidden xsDown>
+        <Grid
+          style={{ paddingRight: "1em", paddingLeft: "1em" }}
+          item
+          sm={3}
+        ></Grid>
+      </Hidden>
     </Grid>
   );
 };
