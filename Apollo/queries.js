@@ -7,6 +7,7 @@ export const GET_TWEETS = gql`
       content
       imgUrl
       imagekit_fileId
+      videoUrl
       createdAt
       User {
         id
@@ -42,6 +43,7 @@ export const GET_SINGLE_TWEET = gql`
       content
       imgUrl
       imagekit_fileId
+      videoUrl
       createdAt
       User {
         id
@@ -93,17 +95,20 @@ export const CREATE_TWEET = gql`
     $imgUrl: String
     $userId: ID!
     $imagekit_fileId: String
+    $videoUrl: String
   ) {
     createTweet(
       content: $content
       imgUrl: $imgUrl
       userId: $userId
       imagekit_fileId: $imagekit_fileId
+      videoUrl: $videoUrl
     ) {
       id
       content
       imgUrl
       imagekit_fileId
+      videoUrl
       createdAt
       User {
         id
@@ -123,6 +128,7 @@ export const NEW_TWEET = gql`
       content
       imgUrl
       imagekit_fileId
+      videoUrl
       createdAt
       User {
         id
@@ -146,16 +152,19 @@ export const UPDATE_TWEET = gql`
     $content: String
     $imgUrl: String
     $imagekit_fileId: String
+    $videoUrl: String
   ) {
     updateTweet(
       id: $id
       content: $content
       imgUrl: $imgUrl
       imagekit_fileId: $imagekit_fileId
+      videoUrl: $videoUrl
     ) {
       id
       content
       imgUrl
+      videoUrl
     }
   }
 `;
@@ -247,6 +256,7 @@ export const UPDATE_USER = gql`
     $email: String
     $phone: String
     $imgUrl: String
+    $imagekit_fileId: String
     $birthdate: Date
     $headline: String
     $bio: String
@@ -262,6 +272,7 @@ export const UPDATE_USER = gql`
       email: $email
       phone: $phone
       imgUrl: $imgUrl
+      imagekit_fileId: $imagekit_fileId
       birthdate: $birthdate
       headline: $headline
       bio: $bio

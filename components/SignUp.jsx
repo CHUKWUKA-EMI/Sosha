@@ -16,9 +16,8 @@ import Link from "@material-ui/core/Link";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
-import { DateRange, Visibility, VisibilityOff } from "@material-ui/icons";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import { Visibility, VisibilityOff } from "@material-ui/icons";
+import { KeyboardDatePicker } from "@material-ui/pickers";
 import validations from "../libs/validations";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Alert from "@material-ui/lab/Alert";
@@ -28,6 +27,9 @@ import axios from "axios";
 const useStyles = makeStyles((theme) => ({
   root: {
     paddingTop: "7em",
+    "& .MuiOutlinedInput-inputAdornedEnd": {
+      height: "0.5em",
+    },
   },
   paper: {
     marginTop: theme.spacing(8),
@@ -86,7 +88,9 @@ const SignUp = () => {
   const [activeCountry, setActiveCountry] = useState(null);
   const [states, setStates] = useState([]);
   const [regionCode, setRegionCode] = useState("");
-  const [birthdate, setBirthdate] = useState("");
+  const [birthdate, setBirthdate] = useState(
+    new Date(new Date().setFullYear(new Date().getFullYear() - 8)).toLocaleDateString()
+  );
   const [state, setState] = useState(initialState);
   const [messages, setMessages] = useState(initialMessages);
   const [show, setShow] = useState({
@@ -442,31 +446,21 @@ const SignUp = () => {
               <Typography color="primary">
                 Date of Birth <span style={{ color: "red" }}>*</span>
               </Typography>
-              <DatePicker
-                selected={birthdate}
+              <KeyboardDatePicker
+                style={{
+                  border: "1px solid #32506D",
+                  borderRadius: "5px",
+                }}
+                clearable
+                value={birthdate}
                 name="birthdate"
+                placeholder={new Date().toLocaleDateString()}
                 onChange={(date) => setBirthdate(date)}
-                isClearable
-                showMonthDropdown
-                showYearDropdown
-                customInput={
-                  <Input
-                    className={classes.profileInfo}
-                    fullWidth
-                    disableUnderline={true}
-                    id="dateOfBirth"
-                    name="birthdate"
-                    onKeyUp={validateField}
-                    endAdornment={
-                      <InputAdornment position="end">
-                        <IconButton>
-                          <DateRange color="primary" />
-                        </IconButton>
-                      </InputAdornment>
-                    }
-                  />
+                maxDate={
+                  new Date(new Date().setFullYear(new Date().getFullYear() - 8))
                 }
-                dateFormat="dd/MM/yyyy"
+                format="DD/MM/yyyy"
+                inputVariant="outlined"
               />
             </Grid>
             <Grid item xs={12} sm={6}>

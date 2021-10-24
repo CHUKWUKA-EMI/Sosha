@@ -229,9 +229,7 @@ const Profile = () => {
         website:
           data.user && data.user && data.user.website ? data.user.website : "",
       });
-      setBirthdate(
-        parseInt(new Date(data.user.birthdate).toLocaleDateString())
-      );
+      setBirthdate(new Date(data.user.birthdate).toLocaleDateString());
       localStorage.setItem("sosha_user", JSON.stringify(data.user));
     },
   });
@@ -353,6 +351,10 @@ const Profile = () => {
         email: state.email.trim() || data.user.email,
         phone: state.phone || data.user.phone,
         imgUrl: cloudRes?.status == 200 ? cloudRes.data.url : data.user.imgUrl,
+        imagekit_fileId:
+          cloudRes?.status == 200
+            ? cloudRes.data.fileId
+            : data.user.imagekit_fileId,
         birthdate: birthdate || data.user.birthdate,
         headline: state.headline.trim() || data.user.birthdate,
         bio: state.bio.trim() || data.user.bio,

@@ -62,11 +62,11 @@ export default function DropDown({ anchorEl, id, open, user }) {
             >
               <Typography
                 style={{ fontSize: "1.5em", fontWeight: "bold" }}
-                variant="body"
+                variant="body1"
               >{`${user.firstName} ${user.lastName}`}</Typography>
               <Typography
                 style={{ fontSize: "1em", fontWeight: 500 }}
-                variant="body"
+                variant="body1"
               >
                 {user.headline ? user.headline : ""}
               </Typography>

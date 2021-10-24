@@ -5,14 +5,12 @@ import {
   Typography,
   Input,
   IconButton,
-  InputAdornment,
   Dialog,
   Button,
 } from "@material-ui/core";
-import { PhotoCamera, Close, DateRange } from "@material-ui/icons";
+import { PhotoCamera, Close } from "@material-ui/icons";
 import { makeStyles } from "@material-ui/core/styles";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import { KeyboardDatePicker } from "@material-ui/pickers";
 
 const useStyles = makeStyles((theme) => ({
   form: {
@@ -192,31 +190,23 @@ const EditProfile = (props) => {
             autoComplete="lastName"
           />
           <Typography color="primary">Date of Birth</Typography>
-          <DatePicker
-            selected={birthdate}
-            onChange={(date) => setBirthdate(date)}
-            isClearable
+          <KeyboardDatePicker
+            style={{
+              border: "1px solid #32506D",
+              borderRadius: "5px",
+            }}
+            clearable
+            value={birthdate}
             name="birthdate"
-            showMonthDropdown
-            showYearDropdown
-            customInput={
-              <Input
-                className={classes.profileInfo}
-                fullWidth
-                disableUnderline={true}
-                id="dateOfBirth"
-                name="birthdate"
-                endAdornment={
-                  <InputAdornment position="end">
-                    <IconButton color="primary">
-                      <DateRange />
-                    </IconButton>
-                  </InputAdornment>
-                }
-              />
+            placeholder={new Date().toLocaleDateString()}
+            onChange={(date) => setBirthdate(date)}
+            maxDate={
+              new Date(new Date().setFullYear(new Date().getFullYear() - 8))
             }
-            dateFormat="dd/MM/yyyy"
+            format="DD/MM/yyyy"
+            inputVariant="outlined"
           />
+
           <Typography color="primary">Email Address</Typography>
           <Input
             className={classes.profileInfo}

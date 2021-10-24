@@ -20,6 +20,8 @@ import {
   EmojiEmotionsOutlined,
   AddAPhoto,
   Close as CloseIcon,
+  VideoLibrary as VideoLibraryIcon,
+  InsertPhoto as InsertPhotoIcon,
 } from "@material-ui/icons";
 import { makeStyles, withStyles } from "@material-ui/core/styles";
 import Skeleton from "@material-ui/lab/Skeleton";
@@ -41,6 +43,8 @@ import { useDispatch } from "react-redux";
 import { getFriends } from "../redux/friendsReducer";
 import { setPosts, addPost } from "../redux/postsReducer";
 import PostsList from "./PostsList";
+import PhotoUploadDialog from "./PhotoUploadDialog";
+import VideoUploadDialog from "./VideoUploadDialog";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -190,8 +194,11 @@ const Feed = () => {
   const dispatch = useDispatch();
   const [user, setUser] = React.useState({});
   const [emojiPicker, setEmojiPicker] = React.useState(false);
-  const [post, setPost] = React.useState({ content: "", imgUrl: "" });
-  const [comment, setComment] = React.useState("");
+  const [post, setPost] = React.useState({
+    content: "",
+    imgUrl: "",
+    videoUrl: "",
+  });
   const [messages, setMessages] = React.useState({ success: "", failure: "" });
   const [imgPreview, setImgPreview] = React.useState(null);
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -200,6 +207,10 @@ const Feed = () => {
   const [openFeedForm, setOpenFeedForm] = React.useState(false);
   const [isConnected, setIsConnected] = React.useState(false);
   const [showOnline, setShowOnline] = React.useState(false);
+
+  const [openPhotoUpload, setOpenPhotoUpload] = React.useState(false);
+  const [openVideoUpload, setOpenVideoUpload] = React.useState(false);
+  const [videoPreview, setVideoPreview] = React.useState(null);
 
   //IMAGE KIT PARAMS
   const urlEndpoint = process.env.IMAGEKIT_URL_ENDPOINT;
@@ -312,6 +323,34 @@ const Feed = () => {
     }
   };
 
+  const uploadVideoToImageKit = async (image) => {
+    const formData = new FormData();
+    formData.append("file", image);
+    formData.append("fileName", image.name);
+    formData.append("publicKey", publicKey);
+    formData.append("folder", "/social_media_posts");
+    try {
+      const authenticate = await axios.get(authenticationEndpoint);
+
+      if (authenticate.status === 200) {
+        formData.append("token", authenticate.data.token);
+        formData.append("expire", authenticate.data.expire);
+        formData.append("signature", authenticate.data.signature);
+        try {
+          const response = await axios.post(
+            "https://upload.imagekit.io/api/v1/files/upload",
+            formData
+          );
+          return response;
+        } catch (error) {
+          return error.message;
+        }
+      }
+    } catch (error) {
+      return error.message;
+    }
+  };
+
   const imageReg = /\.(gif|jpe?g|tiff|png|webp|bmp)$/i;
 
   const handleImageUpload = (e) => {
@@ -342,9 +381,13 @@ const Feed = () => {
       clearMessages();
     },
     onCompleted: () => {
+      setOpenPhotoUpload(false);
       setMessages({ success: "Post successfully created" });
-      setPost({ content: "", imgUrl: "" });
+      setPost({ content: "", imgUrl: "", videoUrl: "" });
       setImgPreview("");
+      setVideoPreview("");
+      setOpenPhotoUpload(false);
+      setOpenVideoUpload(false);
       clearMessages();
     },
   });
@@ -365,7 +408,11 @@ const Feed = () => {
 
   //HANDLE TWEET CREATION
   const handleSubmit = async () => {
-    if (post.content.trim().length == 0 && post.imgUrl == "") {
+    if (
+      post.content.trim().length == 0 &&
+      post.imgUrl == "" &&
+      post.videoUrl == ""
+    ) {
       setMessages({ failure: "Please create a content" });
       clearMessages();
       return;
@@ -373,37 +420,26 @@ const Feed = () => {
     setEmojiPicker(false);
     try {
       setPosting(true);
-      //upload image to imagekit
+      //upload image or video to
+      let cloudRes;
       if (post.imgUrl) {
-        const cloudRes = await uploadToImageKit(post.imgUrl);
-        if (cloudRes.status == 200) {
-          // console.log("cloudRes", cloudRes);
-          await createTweet({
-            variables: {
-              content: post.content,
-              imgUrl: cloudRes.data.url,
-              imagekit_fileId: cloudRes.data.fileId,
-              userId: user.id,
-            },
-          });
-
-          setPosting(false);
-        } else {
-          setMessages({
-            failure: "Image upload failed",
-          });
-          setPosting(false);
-        }
-      } else {
-        await createTweet({
-          variables: {
-            content: post.content,
-            userId: user.id,
-          },
-        });
-
-        setPosting(false);
+        cloudRes = await uploadToImageKit(post.imgUrl);
+      } else if (post.videoUrl) {
+        cloudRes = await uploadVideoToImageKit(post.videoUrl);
       }
+      await createTweet({
+        variables: {
+          content: post.content,
+          imgUrl:
+            post.imgUrl && cloudRes?.status == 200 ? cloudRes.data.url : "",
+          videoUrl:
+            post.videoUrl && cloudRes?.status == 200 ? cloudRes.data.url : "",
+          imagekit_fileId: cloudRes.data.fileId,
+          userId: user.id,
+        },
+      });
+
+      setPosting(false);
     } catch (e) {
       setPosting(false);
       console.log(e);
@@ -412,11 +448,72 @@ const Feed = () => {
 
   const removeImage = () => {
     setPost({ ...post, imgUrl: "" });
-    setImgPreview("");
+    setImgPreview(null);
+  };
+  const removeVideo = () => {
+    setPost({ ...post, videoUrl: "" });
+    setVideoPreview(null);
+  };
+
+  const handleVideoUpload = async (e) => {
+    if (e.target.files[0].size > 10485760) {
+      setMessages({
+        success: "",
+        failure: "Video size cannot exceed 10MB",
+      });
+      clearMessages();
+      return;
+    }
+    const media = new Audio(URL.createObjectURL(e.target.files[0]));
+    media.onloadedmetadata = () => {
+      if (Number(media.duration) / 60 > 13) {
+        setMessages({
+          success: "",
+          failure:
+            "Video duration cannot be more than 10 minutes. Please trim your video and retry",
+        });
+        clearMessages();
+        return;
+      }
+    };
+    if (e.target.files[0] && e.target.files[0].type.includes("video")) {
+      setPost({ ...post, videoUrl: e.target.files[0] });
+      setVideoPreview(URL.createObjectURL(e.target.files[0]));
+    }
   };
 
   return (
     <Grid className={classes.root} container justify="center">
+      <PhotoUploadDialog
+        open={openPhotoUpload}
+        handleClose={() => {
+          setImgPreview(null);
+          setOpenPhotoUpload(false);
+        }}
+        handlePhotoUpload={handleImageUpload}
+        imgPreview={imgPreview}
+        uploadPhoto={handleSubmit}
+        loading={posting}
+        content={post.content}
+        onChange={(e) => {
+          setPost({ ...post, content: e.target.value });
+        }}
+      />
+      <VideoUploadDialog
+        open={openVideoUpload}
+        handleClose={() => {
+          setVideoPreview(null);
+          setOpenVideoUpload(false);
+        }}
+        handleVideoUpload={handleVideoUpload}
+        videoPreview={videoPreview}
+        uploadVideo={handleSubmit}
+        loading={posting}
+        content={post.content}
+        onChange={(e) => {
+          setPost({ ...post, content: e.target.value });
+        }}
+      />
       {isConnected ? (
         <Snackbar
           anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
@@ -527,32 +624,82 @@ const Feed = () => {
           <Box
             style={{
               display: "flex",
-              alignItems: "center",
+              // alignItems: "center",
               marginBottom: "2em",
+              flexDirection: "column",
             }}
             className={classes.feedbox}
           >
-            <Box style={{ display: "flex", marginBottom: "1em" }}>
-              <Avatar
-                style={{ width: "3rem", height: "3rem" }}
-                src={user ? user.imgUrl : ""}
-                className={classes.imgArea}
-              />
-            </Box>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={() => setOpenFeedForm(true)}
+            <Box
               style={{
-                borderRadius: "2em",
-                height: "4em",
-                textTransform: "none",
-                fontWeight: "bold",
-                color: "darkslategrey",
+                display: "flex",
+                alignItems: "center",
               }}
             >
-              Start a post
-            </Button>
+              <Box style={{ display: "flex", marginBottom: "1em" }}>
+                <Avatar
+                  style={{ width: "3rem", height: "3rem" }}
+                  src={user ? user.imgUrl : ""}
+                  className={classes.imgArea}
+                />
+              </Box>
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={() => setOpenFeedForm(true)}
+                style={{
+                  borderRadius: "2em",
+                  height: "4em",
+                  textTransform: "none",
+                  fontWeight: "bold",
+                  color: "darkslategrey",
+                }}
+              >
+                Start a post
+              </Button>
+            </Box>
+            <Box
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-around",
+                padding: "1em",
+              }}
+            >
+              <Button
+                style={{
+                  textTransform: "none",
+                  fontSize: "1.2em",
+                  fontWeight: "bold",
+                }}
+                onClick={() => setOpenPhotoUpload(true)}
+                startIcon={
+                  <InsertPhotoIcon
+                    style={{ width: "2.5em", height: "1.5em" }}
+                    color="primary"
+                  />
+                }
+              >
+                Photo
+              </Button>
+              <Button
+                style={{
+                  textTransform: "none",
+                  fontSize: "1.2em",
+                  fontWeight: "bold",
+                }}
+                startIcon={
+                  <VideoLibraryIcon
+                    style={{ width: "2.5em", height: "1.5em" }}
+                    color="primary"
+                  />
+                }
+                onClick={() => setOpenVideoUpload(true)}
+              >
+                Video
+              </Button>
+            </Box>
           </Box>
         )}
         {openFeedForm && (
@@ -615,6 +762,24 @@ const Feed = () => {
                   ) : (
                     ""
                   )}
+                  {videoPreview ? (
+                    <>
+                      <video controls style={{ width: "100%" }}>
+                        <source src={videoPreview} type="video/mp4" />
+                      </video>
+                      {post.videoUrl != undefined &&
+                        post.videoUrl != "" &&
+                        videoPreview != null && (
+                          <Chip
+                            label="Remove video"
+                            onDelete={removeVideo}
+                            color="primary"
+                          />
+                        )}
+                    </>
+                  ) : (
+                    ""
+                  )}
                 </div>
               </Box>
               <Divider />
@@ -649,6 +814,11 @@ const Feed = () => {
                       <IconButton
                         onClick={handleClick}
                         color="primary"
+                        disabled={
+                          posting ||
+                          videoPreview != null ||
+                          Boolean(post.videoUrl)
+                        }
                         aria-label="upload picture"
                         component="span"
                       >
@@ -659,6 +829,35 @@ const Feed = () => {
                           }}
                         />
                       </IconButton>
+                    </label>
+                  </div>
+                  <div style={{ marginLeft: "1rem" }}>
+                    <label htmlFor="contained-button-file">
+                      <input
+                        accept="video/*"
+                        style={{ display: "none" }}
+                        onChange={handleVideoUpload}
+                        multiple
+                        id="contained-button-file"
+                        type="file"
+                      />
+                      <Button
+                        variant="contained"
+                        disableElevation
+                        style={{
+                          backgroundColor: "white",
+                        }}
+                        disabled={
+                          posting || imgPreview != null || Boolean(post.imgUrl)
+                        }
+                        startIcon={
+                          <VideoLibraryIcon
+                            style={{ width: "2rem", height: "2rem" }}
+                            color="primary"
+                          />
+                        }
+                        component="span"
+                      ></Button>
                     </label>
                   </div>
                   <IconButton onClick={() => setEmojiPicker(!emojiPicker)}>

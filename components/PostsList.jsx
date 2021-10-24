@@ -605,6 +605,15 @@ export default function PostsList({ user }) {
                 ) : (
                   ""
                 )}
+                {tweet.videoUrl ? (
+                  <Box>
+                    <video style={{ width: "100%" }} controls>
+                      <source src={tweet.videoUrl} type="video/mp4" />
+                    </video>
+                  </Box>
+                ) : (
+                  ""
+                )}
                 <Box
                   style={{
                     display: "flex",

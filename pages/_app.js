@@ -9,6 +9,8 @@ import { ApolloProvider } from "@apollo/client";
 import { store } from "../redux/store";
 import { Provider } from "react-redux";
 import { useApollo } from "../Apollo/client";
+import { MuiPickersUtilsProvider } from "@material-ui/pickers";
+import MomentUtils from "@date-io/moment";
 
 export default function App({ Component, pageProps }) {
   useEffect(() => {
@@ -36,7 +38,9 @@ export default function App({ Component, pageProps }) {
         <CssBaseline />
         <ApolloProvider client={apolloClient}>
           <Provider store={store}>
-            <Component {...pageProps} />
+            <MuiPickersUtilsProvider utils={MomentUtils}>
+              <Component {...pageProps} />
+            </MuiPickersUtilsProvider>
           </Provider>
         </ApolloProvider>
       </ThemeProvider>
