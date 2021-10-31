@@ -11,16 +11,9 @@ import { Provider } from "react-redux";
 import { useApollo } from "../Apollo/client";
 import { MuiPickersUtilsProvider } from "@material-ui/pickers";
 import MomentUtils from "@date-io/moment";
-import * as eruda from "eruda";
 
 export default function App({ Component, pageProps }) {
   useEffect(() => {
-    (async function () {
-      await eruda?.eruda?.init({
-        tool: ["console", "elements"],
-        container: document.body,
-      });
-    })();
     // Remove the server-side injected CSS.
     const jssStyles = document.querySelector("#jss-server-side");
     if (jssStyles) {
