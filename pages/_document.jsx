@@ -16,8 +16,8 @@ export default class MyDocument extends Document {
             href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
 
           /> */}
-          <script src="//cdn.jsdelivr.net/npm/eruda"></script>
-          <script>eruda.init();</script>
+          {/* <script src="//cdn.jsdelivr.net/npm/eruda"></script> */}
+          {/* <script>eruda.init();</script> */}
 
           <link rel="shortcut icon" href="/favicon.ico" />
 

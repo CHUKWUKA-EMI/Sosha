@@ -435,7 +435,10 @@ const Feed = () => {
             post.imgUrl && cloudRes?.status == 200 ? cloudRes.data.url : "",
           videoUrl:
             post.videoUrl && cloudRes?.status == 200 ? cloudRes.data.url : "",
-          imagekit_fileId: cloudRes.data.fileId,
+          imagekit_fileId:
+            (post.imgUrl || post.videoUrl) && cloudRes?.status == 200
+              ? cloudRes.data.fileId
+              : "",
           userId: user.id,
         },
       });

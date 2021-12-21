@@ -49,8 +49,8 @@ export default function DropDown({ anchorEl, id, open, user }) {
           >
             <Avatar
               style={{ width: "5em", height: "5em" }}
-              alt={user.firstName}
-              src={user.imgUrl}
+              alt={user?.firstName}
+              src={user?.imgUrl}
             />
             <Box
               style={{
@@ -63,12 +63,12 @@ export default function DropDown({ anchorEl, id, open, user }) {
               <Typography
                 style={{ fontSize: "1.5em", fontWeight: "bold" }}
                 variant="body1"
-              >{`${user.firstName} ${user.lastName}`}</Typography>
+              >{`${user?.firstName} ${user?.lastName}`}</Typography>
               <Typography
                 style={{ fontSize: "1em", fontWeight: 500 }}
                 variant="body1"
               >
-                {user.headline ? user.headline : ""}
+                {user?.headline}
               </Typography>
             </Box>
           </Box>
@@ -110,7 +110,7 @@ export default function DropDown({ anchorEl, id, open, user }) {
             >
               Sign Out
             </Button>
-            {user.user_role === "admin" && (
+            {user?.user_role === "admin" && (
               <Button
                 style={{
                   marginTop: "1em",

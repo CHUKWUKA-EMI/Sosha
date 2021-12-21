@@ -245,7 +245,7 @@ function Community(props) {
                 aria-describedby={id}
                 onClick={handleClick}
               >
-                <Avatar style={{ fontSize: "0.5em" }} src={user.imgUrl} />
+                <Avatar style={{ fontSize: "0.5em" }} src={user?.imgUrl} />
                 <div style={{ display: "flex", alignItems: "center" }}>
                   <div style={{ color: "#32506D", fontWeight: "bold" }}>Me</div>
                   <ArrowDropDown style={{ fontSize: "2em" }} color="primary" />
@@ -278,7 +278,7 @@ function Community(props) {
               }}
             >
               <Avatar
-                src={user ? user.imgUrl : ""}
+                src={user ? user?.imgUrl : ""}
                 style={{ height: "6rem", width: "6rem" }}
               />
             </div>
