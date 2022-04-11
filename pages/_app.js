@@ -32,6 +32,7 @@ export default function App({ Component, pageProps }) {
           name="viewport"
           content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no"
         />
+       <meta name="google-site-verification" content="floVOl1SGVX2ZPluQvvpgqLprSxByAHWerD4vr7tkps" />
       </Head>
 
       <ThemeProvider theme={theme}>
